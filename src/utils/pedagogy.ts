@@ -7,7 +7,7 @@ export function explainStep(text: string, lang: Lang): string {
       ? 'Jereo indray ny angona nampidirinao: misy fepetra matematika tsy voahaja.'
       : 'Vérifie les données saisies : une condition mathématique n’est pas respectée.';
   }
-  if (t.includes('coefficient directeur') || t.includes('ordonnée à l'origine') || t.includes('variation')) {
+  if (t.includes('coefficient directeur') || t.includes("ordonnée à l'origine") || t.includes('variation')) {
     return lang === 'mg' ? 'Ao amin’ny f(x)=ax+b, ny a no coefficient directeur ary izy no mamaritra raha miakatra na midina ny droite.' : 'Dans f(x)=ax+b, a est le coefficient directeur : son signe indique si la droite monte, descend ou reste horizontale.';
   }
   if (t.includes('det(u,v)') || t.includes('colinéaire')) {
