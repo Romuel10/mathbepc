@@ -1,0 +1,36 @@
+name: Régénérer lockfile sécurisé
+
+on:
+  push:
+    branches: [release-v1.0.0]
+    paths:
+      - '.github/workflows/lock-audit-fix.yml'
+      - 'package.json'
+
+permissions:
+  contents: read
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Mettre à jour Vite et les correctifs transitifs
+        run: |
+          npm install --package-lock-only --save-dev vite@7.3.6
+          npm audit fix --package-lock-only
+      - name: Vérifier l'audit complet
+        run: npm audit --audit-level=high
+      - name: Publier package.json et package-lock.json corrigés
+        uses: actions/upload-artifact@v4
+        with:
+          name: mathbepc-v1-lockfile
+          path: |
+            package.json
+            package-lock.json
+          if-no-files-found: error
+          retention-days: 1
