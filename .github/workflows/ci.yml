@@ -2,7 +2,7 @@ name: Vérification MathBEPC
 
 on:
   push:
-    branches: [main, fix-complete-project, v2-learning]
+    branches: [main, fix-complete-project, v2-learning, v3-programme-bepc]
   pull_request:
     branches: [main]
 
