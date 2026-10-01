@@ -32,6 +32,7 @@ import {
 type Group = 'Calculs & nombres' | 'Algèbre' | 'Géométrie' | 'Données';
 type View = 'home'|'smart'|'subject'|'practice'|'lessons'|'exam'|'progress'|'annales'|'programme'|'chapters'|'chapter';
 interface Chapter { id:string; title:string; mgTitle:string; icon:ComponentType<{className?:string}>; description:string; mgDescription:string; keywords:string; group:Group; component:ComponentType; }
+interface NavState { mathbepc:true; view:View; selected:string|null; }
 
 const chapters:Chapter[]=[
   {id:'fractions',title:'Fractions & rationnels',mgTitle:'Fraction & rationnel',icon:FractionIcon,description:'Fractions, expressions, PGCD/PPCM, rationalisation',mgDescription:'Fraction, expression, PGCD/PPCM ary rationalisation',keywords:'fraction rationnel pgcd ppcm simplifier',group:'Calculs & nombres',component:FractionTopic},
@@ -69,22 +70,45 @@ export default function App(){
   const [view,setView]=useState<View>('home');const [selected,setSelected]=useState<string|null>(null);const [menuOpen,setMenuOpen]=useState(false);const [search,setSearch]=useState('');const [lang,setLang]=useState<Lang>(()=>getStoredLanguage());const [progressTick,setProgressTick]=useState(0);
   const {theme,toggle}=useTheme();const {canInstall,offline,install}=usePWA();const tr=ui(lang);const current=chapters.find(c=>c.id===selected);const currentIndex=chapters.findIndex(c=>c.id===selected);const progress=useMemo(()=>loadProgress(),[progressTick]);
   useEffect(()=>{const h=()=>setProgressTick(v=>v+1);window.addEventListener('mathbepc-progress',h);return()=>window.removeEventListener('mathbepc-progress',h);},[]);
-  const go=(v:View)=>{setView(v);setMenuOpen(false);window.scrollTo({top:0,behavior:'smooth'});};
-  const goHome=()=>{setSelected(null);setSearch('');go('home');};
-  const openChapter=(id:string)=>{setSelected(id);recordVisit(id);go('chapter');};
+  useEffect(()=>{
+    window.history.replaceState({mathbepc:true,view:'home',selected:null} satisfies NavState,'');
+    const onPop=(event:PopStateEvent)=>{
+      const state=event.state as NavState|null;
+      if(state?.mathbepc){setView(state.view);setSelected(state.selected);setMenuOpen(false);window.scrollTo({top:0,behavior:'smooth'});}
+      else{setView('home');setSelected(null);setMenuOpen(false);}
+    };
+    window.addEventListener('popstate',onPop);
+    return()=>window.removeEventListener('popstate',onPop);
+  },[]);
+  const navigate=(v:View,nextSelected:string|null=null)=>{
+    const state:NavState={mathbepc:true,view:v,selected:v==='chapter'?nextSelected:null};
+    window.history.pushState(state,'');
+    setView(v);setSelected(state.selected);setMenuOpen(false);window.scrollTo({top:0,behavior:'smooth'});
+  };
+  const go=(v:View)=>navigate(v,null);
+  const goBack=()=>{if(view!=='home')window.history.back();};
+  const goHome=()=>{setSearch('');navigate('home',null);};
+  const openChapter=(id:string)=>{recordVisit(id);navigate('chapter',id);};
   const toggleLang=()=>{const next=lang==='fr'?'mg':'fr';setLang(next);setStoredLanguage(next);};
   const filtered=useMemo(()=>{const q=search.trim().toLowerCase();if(!q)return chapters;return chapters.filter(ch=>`${ch.title} ${ch.mgTitle} ${ch.description} ${ch.mgDescription} ${ch.keywords}`.toLowerCase().includes(q));},[search]);
   const accuracy=progress.attempts?Math.round(progress.correct/progress.attempts*100):0;
+  const pageTitle=view==='chapter'&&current
+    ? (lang==='mg'?current.mgTitle:current.title)
+    : ({smart:lang==='mg'?'Hamaha exercice':'Résoudre',subject:lang==='mg'?'Sujet BEPC':'Sujet BEPC',practice:tr.practice,lessons:tr.revise,exam:tr.exam,progress:tr.progress,annales:tr.annales,programme:lang==='mg'?'Programme ofisialy':'Programme officiel',chapters:tr.explore} as Partial<Record<View,string>>)[view]||'MathBEPC';
 
   return <div className="min-h-screen bg-[--color-surface] text-[--color-text] transition-colors duration-300">
-    <header className="sticky top-0 z-50 border-b border-[--color-border]/80 bg-[--color-surface]/92 backdrop-blur-xl safe-top"><div className="max-w-6xl mx-auto px-4 sm:px-6 min-h-16 py-2 flex items-center justify-between gap-2">
-      <button onClick={goHome} className="flex items-center gap-3 cursor-pointer"><AppLogo/><div className="text-left hidden sm:block"><div className="text-sm font-extrabold">MathBEPC</div><div className="text-[10px] text-[--color-text-muted]">{tr.appSubtitle}</div></div></button>
-      <div className="flex items-center gap-1.5">{offline&&<span className="hidden sm:inline-flex px-2.5 py-1 rounded-lg bg-amber-500/10 text-[10px] font-semibold text-amber-500">{tr.offline}</span>}{canInstall&&<button onClick={install} className="hidden sm:inline-flex px-3 py-2 rounded-xl bg-[--color-accent] text-white text-xs font-semibold cursor-pointer">{tr.install}</button>}<button onClick={toggleLang} title={tr.languageTitle} className="h-10 min-w-10 px-2 rounded-xl bg-[--color-btn-bg] text-[11px] font-extrabold cursor-pointer">{tr.language}</button><button onClick={toggle} className="w-10 h-10 rounded-xl bg-[--color-btn-bg] flex items-center justify-center cursor-pointer">{theme==='dark'?<SunIcon className="w-4 h-4"/>:<MoonIcon className="w-4 h-4"/>}</button><button onClick={()=>setMenuOpen(v=>!v)} className="h-10 px-3 rounded-xl bg-[--color-btn-bg] flex items-center gap-2 cursor-pointer font-bold text-xs">{menuOpen?<CloseIcon className="w-4 h-4"/>:<MenuIcon className="w-4 h-4"/>}<span className="hidden sm:inline">Menu</span></button></div>
+    <header className="sticky top-0 z-50 border-b border-[--color-border]/80 bg-[--color-surface]/94 backdrop-blur-xl safe-top"><div className="max-w-6xl mx-auto px-3 sm:px-6 min-h-16 py-2 flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2 min-w-0">
+        {view!=='home'&&<button onClick={goBack} className="h-11 px-3 rounded-xl border border-[--color-border] bg-[--color-card] flex items-center gap-1.5 cursor-pointer font-extrabold text-xs shrink-0" aria-label={lang==='mg'?'Hiverina':'Retour'}><ArrowLeftIcon className="w-4 h-4"/><span>{lang==='mg'?'Hiverina':'Retour'}</span></button>}
+        <button onClick={goHome} className={`items-center gap-3 cursor-pointer min-w-0 ${view==='home'?'flex':'hidden sm:flex'}`}><AppLogo/><div className="text-left hidden sm:block"><div className="text-sm font-extrabold">MathBEPC</div><div className="text-[10px] text-[--color-text-muted]">{tr.appSubtitle}</div></div></button>
+        {view!=='home'&&<div className="sm:hidden min-w-0"><p className="text-[9px] uppercase tracking-wider font-bold text-[--color-text-muted]">MathBEPC</p><p className="text-sm font-extrabold truncate">{pageTitle}</p></div>}
+      </div>
+      <div className="flex items-center gap-1.5">{offline&&<span className="hidden sm:inline-flex px-2.5 py-1 rounded-lg bg-amber-500/10 text-[10px] font-semibold text-amber-500">{tr.offline}</span>}{canInstall&&<button onClick={install} className="hidden sm:inline-flex px-3 py-2 rounded-xl bg-[--color-accent] text-white text-xs font-semibold cursor-pointer">{tr.install}</button>}<button onClick={toggleLang} title={tr.languageTitle} className="h-10 min-w-10 px-2 rounded-xl bg-[--color-btn-bg] text-[11px] font-extrabold cursor-pointer">{tr.language}</button><button onClick={toggle} className="hidden sm:flex w-10 h-10 rounded-xl bg-[--color-btn-bg] items-center justify-center cursor-pointer">{theme==='dark'?<SunIcon className="w-4 h-4"/>:<MoonIcon className="w-4 h-4"/>}</button><button onClick={()=>setMenuOpen(v=>!v)} className="h-10 w-10 sm:w-auto sm:px-3 rounded-xl bg-[--color-btn-bg] flex items-center justify-center sm:gap-2 cursor-pointer font-bold text-xs">{menuOpen?<CloseIcon className="w-4 h-4"/>:<MenuIcon className="w-4 h-4"/>}<span className="hidden sm:inline">Menu</span></button></div>
     </div>{menuOpen&&<div className="border-t border-[--color-border] bg-[--color-card]/98 shadow-xl"><div className="max-w-6xl mx-auto p-4 grid grid-cols-2 sm:grid-cols-4 gap-2">{[
       ['home',tr.backHome],['smart',tr.solve],['subject',lang==='mg'?'Sujet iray manontolo':'Sujet BEPC complet'],['practice',tr.practice],['lessons',tr.revise],['exam',tr.exam],['annales',tr.annales],['programme',lang==='mg'?'Programme ofisialy':'Programme officiel'],['progress',tr.progress],['chapters',tr.explore]
     ].map(([id,label])=><button key={id} onClick={()=>go(id as View)} className="p-3 rounded-xl bg-[--color-surface] border border-[--color-border] text-left text-xs font-bold cursor-pointer hover:border-[--color-accent]/40">{label}</button>)}</div></div>}</header>
 
-    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7 sm:py-10 pb-24">
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7 sm:py-10 pb-32 sm:pb-24">
       {view==='home'&&<div className="animate-fade-up">
         <section className="max-w-3xl mx-auto text-center pt-3 sm:pt-8"><span className="inline-flex px-3 py-1 rounded-full bg-[--color-accent-subtle] text-[--color-accent] text-[11px] font-bold">BEPC Madagascar • 3e</span><h1 className="mt-4 text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight">{tr.homeTitle}</h1><p className="mt-3 text-sm sm:text-base text-[--color-text-secondary] max-w-2xl mx-auto">{tr.homeLead}</p></section>
         <section className="grid md:grid-cols-3 gap-4 mt-9 max-w-5xl mx-auto">
@@ -100,6 +124,30 @@ export default function App(){
 
       {view==='chapter'&&current&&<div className="max-w-3xl mx-auto animate-fade-up"><div className="flex flex-wrap gap-2 mb-6"><button onClick={()=>go('chapters')} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[--color-btn-bg] text-xs font-bold cursor-pointer"><ArrowLeftIcon className="w-3.5 h-3.5"/>{tr.changeChapter}</button><button onClick={()=>go('lessons')} className="px-3 py-2 rounded-xl bg-[--color-accent-subtle] text-[--color-accent] text-xs font-bold cursor-pointer">{lang==='mg'?'Hamerina ny lesona':'Réviser la méthode'}</button></div><div className="flex items-center gap-4 mb-6"><div className="w-13 h-13 rounded-2xl bg-[--color-accent] flex items-center justify-center shadow-[0_4px_20px_var(--color-accent-glow)]"><current.icon className="w-6 h-6 text-white"/></div><div><h1 className="text-xl sm:text-2xl font-extrabold">{lang==='mg'?current.mgTitle:current.title}</h1><p className="text-xs text-[--color-text-muted] mt-1">{lang==='mg'?current.mgDescription:current.description}</p></div></div><div className="bg-[--color-card] rounded-2xl border border-[--color-border] p-4 sm:p-7 shadow-[0_4px_32px_var(--color-glow)]"><current.component/></div><div className="flex justify-between gap-3 mt-7">{currentIndex>0?<button onClick={()=>openChapter(chapters[currentIndex-1].id)} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[--color-btn-bg] text-xs font-bold cursor-pointer"><ArrowLeftIcon className="w-3 h-3"/>{tr.prev}</button>:<span/>}{currentIndex<chapters.length-1?<button onClick={()=>openChapter(chapters[currentIndex+1].id)} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[--color-btn-bg] text-xs font-bold cursor-pointer">{tr.next}<ArrowRightIcon className="w-3 h-3"/></button>:<span/>}</div></div>}
     </main>
+
+    <nav className="mobile-bottom-nav sm:hidden fixed bottom-0 inset-x-0 z-50 border-t border-[--color-border] bg-[--color-card]/96 backdrop-blur-xl px-1 pt-1" aria-label={lang==='mg'?'Navigation lehibe':'Navigation principale'}>
+      <div className="grid grid-cols-5">
+        {([
+          ['home',lang==='mg'?'Fandraisana':'Accueil','home'],
+          ['smart',lang==='mg'?'Hamaha':'Résoudre','solve'],
+          ['practice',lang==='mg'?'Fanazarana':'Exercices','practice'],
+          ['lessons',lang==='mg'?'Lesona':'Réviser','lesson'],
+          ['menu',lang==='mg'?'Hafa':'Plus','menu']
+        ] as const).map(([id,label,icon])=>{
+          const active=id==='menu'?menuOpen:view===id;
+          return <button key={id} onClick={()=>id==='menu'?setMenuOpen(v=>!v):go(id as View)} className="mobile-nav-button px-1 py-1.5 text-[9px] font-bold text-[--color-text-muted] cursor-pointer" aria-current={active?'page':undefined}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className="mobile-nav-icon" aria-hidden="true">
+              {icon==='home'&&<><path d="M3.5 10.5 12 3.5l8.5 7"/><path d="M5.5 9.5V20h13V9.5"/><path d="M9.5 20v-6h5v6"/></>}
+              {icon==='solve'&&<><path d="M4 5h7"/><path d="M7.5 2v6"/><path d="M14 5h6"/><path d="m15 13 5 5"/><path d="m20 13-5 5"/></>}
+              {icon==='practice'&&<><path d="M4 5h16v14H4z"/><path d="m8 12 2.2 2.2L16 8.5"/></>}
+              {icon==='lesson'&&<><path d="M4 4.5c3.2 0 5.7.7 8 2.2v13c-2.3-1.5-4.8-2.2-8-2.2z"/><path d="M20 4.5c-3.2 0-5.7.7-8 2.2v13c2.3-1.5 4.8-2.2 8-2.2z"/></>}
+              {icon==='menu'&&<><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></>}
+            </svg>
+            <span>{label}</span>
+          </button>;
+        })}
+      </div>
+    </nav>
 
     <footer className="border-t border-[--color-border] mt-8"><div className="max-w-6xl mx-auto px-4 py-5 flex flex-col sm:flex-row justify-between gap-2 text-[10px] text-[--color-text-muted]"><span>MathBEPC Madagascar • v{__APP_VERSION__} • Révision BEPC 3e</span><span>{lang==='mg'?'Ny calculateur dia manampy; ny fahatakarana no tanjona.':'Le calculateur aide ; comprendre la méthode reste l’objectif.'}</span></div></footer>
   </div>;

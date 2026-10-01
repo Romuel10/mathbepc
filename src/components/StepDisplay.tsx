@@ -12,7 +12,9 @@ function escapeHtml(text: string): string {
 
 function fmt(text: string): string {
   return escapeHtml(text)
-    .replace(/√(\d+)/g, '<span style="color:var(--color-accent);font-weight:600">√$1</span>')
+    .replace(/->|→/g, '⇒')
+    .replace(/\*/g, '×')
+    .replace(/√(\d+(?:[.,]\d+)?)/g, '<span class="math-root">√$1</span>')
     .replace(/x²/g, 'x<sup>2</sup>').replace(/x³/g, 'x<sup>3</sup>')
     .replace(/(\d+)x²/g, '$1x<sup>2</sup>').replace(/(\d+)x³/g, '$1x<sup>3</sup>')
     .replace(/x₁/g, 'x<sub>1</sub>').replace(/x₂/g, 'x<sub>2</sub>').replace(/x₀/g, 'x<sub>0</sub>')
@@ -25,73 +27,96 @@ function fmt(text: string): string {
     .replace(/Dₓ/g, 'D<sub>x</sub>').replace(/Dᵧ/g, 'D<sub>y</sub>')
     .replace(/σ²/g, 'σ<sup>2</sup>')
     .replace(/(\d+)²/g, '$1<sup>2</sup>').replace(/(\d+)³/g, '$1<sup>3</sup>')
-    .replace(/\^(\d+)/g, '<sup>$1</sup>');
+    .replace(/\^(\d+)/g, '<sup>$1</sup>')
+    .replace(/(^|[^\w])(-?\d+(?:[.,]\d+)?)\/(-?\d+(?:[.,]\d+)?)(?=$|[^\w])/g,
+      '$1<span class="math-frac"><span>$2</span><span>$3</span></span>');
 }
 
-
-function stepLabel(type: string | undefined, index: number, total: number, lang: Lang): string {
-  if (type === 'result' || index === total - 1) return lang === 'mg' ? 'Famaranana' : 'Conclusion';
-  if (type === 'info' || index === 0) return lang === 'mg' ? 'Données / Fitsipika' : 'Données / Propriété';
+function stepLabel(type: string | undefined, index: number, lang: Lang): string {
+  if (type === 'result') return lang === 'mg' ? 'Famaranana' : 'Conclusion';
+  if (type === 'info') return lang === 'mg' ? 'Fitsipika' : 'Propriété';
   if (type === 'warning') return lang === 'mg' ? 'Fampitandremana' : 'Attention';
-  return lang === 'mg' ? 'Kajy' : 'Calcul';
+  return lang === 'mg' ? `Dingana ${index + 1}` : `Étape ${index + 1}`;
 }
 
 export default function StepDisplay({ steps, result }: StepDisplayProps) {
   const [lang,setLang]=useState<Lang>(()=>getStoredLanguage());
   const [openExplanation,setOpenExplanation]=useState<number|null>(null);
+
   useEffect(()=>{
     const handler=(event:Event)=>setLang(((event as CustomEvent<Lang>).detail)||getStoredLanguage());
     window.addEventListener('mathbepc-language',handler);
     return()=>window.removeEventListener('mathbepc-language',handler);
   },[]);
+
   if (!steps.length) return null;
+
   return (
-    <div className="mt-8 rounded-2xl overflow-hidden border border-[--color-border] bg-[--color-card] shadow-[0_4px_24px_var(--color-glow)]">
-      <div className="px-5 py-3 border-b border-[--color-border] flex items-center justify-between">
-        <div><h3 className="text-[10px] font-bold uppercase tracking-widest text-[--color-text-muted]">{lang==='mg'?'Vahaolana tsikelikely':'Résolution étape par étape'}</h3><p className="text-[10px] text-[--color-text-muted] mt-0.5">{lang==='mg'?'Tsindrio “Fa maninona?” raha mila fanazavana.':'Appuie sur “Pourquoi ?” pour comprendre une étape.'}</p></div>
-        <span className="text-[9px] font-mono text-[--color-text-muted] bg-[--color-btn-bg] px-2 py-0.5 rounded-full">{steps.length}</span>
-      </div>
-      <div className="divide-y divide-[--color-border]/60">
+    <section className="solution-panel mt-7" aria-label={lang==='mg'?'Vahaolana tsikelikely':'Solution détaillée'}>
+      <header className="solution-header">
+        <div>
+          <p className="solution-eyebrow">{lang==='mg'?'VAHAOLANA':'SOLUTION'}</p>
+          <h3 className="solution-title">{lang==='mg'?'Andao hatao tsikelikely':'Résolution étape par étape'}</h3>
+          <p className="solution-subtitle">{lang==='mg'?'Dingana iray isaky ny mandeha. Tsindrio ny fanazavana raha mila mahafantatra ny antony.':'Une transformation à la fois. Ouvre l’explication d’une étape pour comprendre pourquoi elle est valable.'}</p>
+        </div>
+        <span className="solution-count">{steps.length} {lang==='mg'?'dingana':'étape(s)'}</span>
+      </header>
+
+      <div className="solution-steps">
         {steps.map((s, i) => {
-          const warn = s.type === 'warning';
-          const ok = !warn && (s.highlight || s.type === 'result');
-          const info = s.type === 'info';
+          const warn=s.type==='warning';
+          const conclusion=s.type==='result'||s.highlight;
+          const explanation=explainStep(s.text,lang);
           return (
-            <div key={i} className="px-5 py-3 text-[13px]"
-              style={{ backgroundColor: ok ? 'var(--color-ok-bg)' : warn ? 'var(--color-warn-bg)' : info ? 'var(--color-info-bg)' : 'transparent' }}>
-              <div className="flex gap-3">
-                <div className="flex-shrink-0 pt-0.5">
-                  {ok ? (
-                    <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-ok-text)' }}>
-                      <CheckIcon className="w-3 h-3 text-white" />
-                    </div>
-                  ) : (
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[9px] font-bold"
-                      style={{
-                        backgroundColor: warn ? 'var(--color-warn-bg)' : info ? 'var(--color-accent-subtle)' : 'var(--color-btn-bg)',
-                        color: warn ? 'var(--color-warn-text)' : info ? 'var(--color-accent)' : 'var(--color-text-muted)',
-                      }}>{i + 1}</span>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="inline-flex mb-1 px-2 py-0.5 rounded-full bg-[--color-btn-bg] text-[8px] uppercase tracking-widest font-bold text-[--color-text-muted]">{stepLabel(s.type,i,steps.length,lang)}</span>
-                  <span className={`block font-mono leading-relaxed ${ok ? 'font-semibold' : ''}`}
-                    style={{ color: ok ? 'var(--color-ok-text)' : warn ? 'var(--color-warn-text)' : info ? 'var(--color-text-secondary)' : 'var(--color-text)' }}
-                    dangerouslySetInnerHTML={{ __html: fmt(s.text) }} />
-                  {!warn&&<button onClick={()=>setOpenExplanation(openExplanation===i?null:i)} className="block mt-2 text-[10px] font-bold text-[--color-accent] cursor-pointer">{openExplanation===i?(lang==='mg'?'Akatona':'Masquer'):(lang==='mg'?'Fa maninona?':'Pourquoi ?')}</button>}
-                </div>
+            <article key={i} className={`solution-step ${warn?'solution-step-warning':''} ${conclusion?'solution-step-result':''}`}>
+              <div className="solution-step-rail" aria-hidden="true">
+                <span className={`solution-step-dot ${conclusion?'solution-step-dot-done':''}`}>
+                  {conclusion?<CheckIcon className="w-3.5 h-3.5"/>:i+1}
+                </span>
+                {i<steps.length-1&&<span className="solution-step-line"/>}
               </div>
-              {openExplanation===i&&!warn&&<div className="ml-8 mt-2 p-3 rounded-xl bg-[--color-inset] text-xs leading-relaxed text-[--color-text-secondary]">{explainStep(s.text,lang)}</div>}
-            </div>
+
+              <div className="solution-step-body">
+                <div className="solution-step-top">
+                  <span className="solution-step-label">{stepLabel(s.type,i,lang)}</span>
+                  {!warn&&<button
+                    type="button"
+                    onClick={()=>setOpenExplanation(openExplanation===i?null:i)}
+                    className="solution-why"
+                    aria-expanded={openExplanation===i}
+                  >
+                    {openExplanation===i
+                      ? (lang==='mg'?'Akatona':'Masquer')
+                      : (lang==='mg'?'Fa maninona ?':'Pourquoi ?')}
+                  </button>}
+                </div>
+
+                <div
+                  className={`math-expression ${conclusion?'math-expression-result':''} ${warn?'math-expression-warning':''}`}
+                  dangerouslySetInnerHTML={{__html:fmt(s.text)}}
+                />
+
+                {openExplanation===i&&!warn&&(
+                  <div className="solution-explanation">
+                    <span className="solution-explanation-title">{lang==='mg'?'Fanazavana':'Explication'}</span>
+                    <p>{explanation}</p>
+                  </div>
+                )}
+              </div>
+            </article>
           );
         })}
       </div>
-      {result && (
-        <div className="px-5 py-4 border-t" style={{ backgroundColor: 'var(--color-ok-bg)', borderColor: 'var(--color-ok-border)' }}>
-          <p className="text-[9px] uppercase tracking-widest font-bold mb-1.5" style={{ color: 'var(--color-ok-text)', opacity: 0.65 }}>{lang==='mg'?'Valiny':'Résultat'}</p>
-          <p className="text-lg font-bold font-mono" style={{ color: 'var(--color-ok-text)' }} dangerouslySetInnerHTML={{ __html: fmt(result) }} />
-        </div>
+
+      {result&&(
+        <footer className="final-answer">
+          <div className="final-answer-icon"><CheckIcon className="w-4 h-4"/></div>
+          <div className="min-w-0">
+            <p className="final-answer-label">{lang==='mg'?'VALINY FARANY':'RÉPONSE FINALE'}</p>
+            <div className="final-answer-value" dangerouslySetInnerHTML={{__html:fmt(result)}}/>
+          </div>
+        </footer>
       )}
-    </div>
+    </section>
   );
 }
