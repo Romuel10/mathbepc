@@ -7,6 +7,24 @@ export function explainStep(text: string, lang: Lang): string {
       ? 'Jereo indray ny angona nampidirinao: misy fepetra matematika tsy voahaja.'
       : 'Vérifie les données saisies : une condition mathématique n’est pas respectée.';
   }
+  if (t.includes('coefficient directeur') || t.includes("ordonnée à l'origine") || t.includes('variation')) {
+    return lang === 'mg' ? 'Ao amin’ny f(x)=ax+b, ny a no coefficient directeur ary izy no mamaritra raha miakatra na midina ny droite.' : 'Dans f(x)=ax+b, a est le coefficient directeur : son signe indique si la droite monte, descend ou reste horizontale.';
+  }
+  if (t.includes('det(u,v)') || t.includes('colinéaire')) {
+    return lang === 'mg' ? 'Raha mitovy aotra ny déterminant dia colinéaires ireo vecteurs roa.' : 'Deux vecteurs du plan sont colinéaires lorsque leur déterminant est nul.';
+  }
+  if (t.includes('u·v') || t.includes('orthogonal')) {
+    return lang === 'mg' ? 'Raha mitovy aotra ny produit scalaire dia mifampijoro mahitsy ireo vecteurs.' : 'Deux vecteurs sont orthogonaux lorsque leur produit scalaire est nul.';
+  }
+  if (t.includes('angle inscrit') || t.includes('angle au centre')) {
+    return lang === 'mg' ? 'Ny zoro inscrit dia antsasaky ny zoro au centre izay manapaka arc mitovy.' : 'Un angle inscrit mesure la moitié de l’angle au centre qui intercepte le même arc.';
+  }
+  if (t.includes('classe modale') || t.includes('fréquence') || t.includes('effectif total')) {
+    return lang === 'mg' ? 'Amin’ny statistique regroupée, ny classe modale no classe manana effectif lehibe indrindra.' : 'Dans une série regroupée, la classe modale est celle dont l’effectif est le plus élevé.';
+  }
+  if (t.includes('k³') || t.includes('k²') || t.includes('réduction')) {
+    return lang === 'mg' ? 'Raha ampitomboina amin’ny k ny halavana, ny aire dia ampitomboina amin’ny k² ary ny volume amin’ny k³.' : 'Lors d’une réduction ou d’un agrandissement, les longueurs sont multipliées par k, les aires par k² et les volumes par k³.';
+  }
   if (t.includes('pgcd')) {
     return lang === 'mg' ? 'Ny PGCD dia mpizara lehibe indrindra iraisan’ireo isa roa.' : 'Le PGCD est le plus grand nombre qui divise exactement les deux nombres.';
   }

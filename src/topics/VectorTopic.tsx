@@ -3,39 +3,32 @@ import InputField from '../components/InputField';
 import SolveButton from '../components/SolveButton';
 import StepDisplay from '../components/StepDisplay';
 import TabButton from '../components/TabButton';
-import { solveVectorCoords, solveVectorNorm, solveMidpoint, type Step } from '../utils/mathEngine';
+import {
+  solveVectorCoords, solveVectorNorm, solveMidpoint, solveVectorOperation,
+  solveVectorRelations, solveLineThroughPoints, solvePointOnLine,
+  solveTranslationPoint, solveCentralSymmetry, solveHomothetyPoint, solveAxialSymmetryPoint, type Step,
+} from '../utils/mathEngine';
 import { parseNumberInput, errorSteps } from '../utils/input';
 
-export default function VectorTopic() {
-  const [tab, setTab] = useState<'coords'|'mid'|'norm'>('coords');
-  const [xA, setXA] = useState(''); const [yA, setYA] = useState(''); const [xB, setXB] = useState(''); const [yB, setYB] = useState('');
-  const [cSteps, setCSteps] = useState<Step[]>([]); const [cResult, setCResult] = useState('');
-  const [vx, setVx] = useState(''); const [vy, setVy] = useState('');
-  const [nSteps, setNSteps] = useState<Step[]>([]); const [nResult, setNResult] = useState('');
-
-  const solveC = () => { try { const r = solveVectorCoords(parseNumberInput(xA,'xA'),parseNumberInput(yA,'yA'),parseNumberInput(xB,'xB'),parseNumberInput(yB,'yB')); setCSteps(r.steps); setCResult(r.result); } catch(e){setCSteps(errorSteps(e)); setCResult('');} };
-  const solveM = () => { try { const r = solveMidpoint(parseNumberInput(xA,'xA'),parseNumberInput(yA,'yA'),parseNumberInput(xB,'xB'),parseNumberInput(yB,'yB')); setCSteps(r.steps); setCResult(r.result); } catch(e){setCSteps(errorSteps(e)); setCResult('');} };
-  const solveN = () => { try { const r = solveVectorNorm(parseNumberInput(vx,'x'),parseNumberInput(vy,'y')); setNSteps(r.steps); setNResult(r.result); } catch(e){setNSteps(errorSteps(e)); setNResult('');} };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex gap-2 flex-wrap">
-        {([['coords','Coordonnées AB'],['mid','Milieu [AB]'],['norm','Norme']] as const).map(([id,label])=>(<TabButton key={id} active={tab===id} onClick={()=>setTab(id as any)}>{label}</TabButton>))}
-      </div>
-      {(tab==='coords'||tab==='mid')&&<>
-        <p className="text-sm text-[--color-text-secondary]">Calculer les coordonnées du {tab==='coords'?'vecteur AB':'milieu de [AB]'}</p>
-        <div className="grid grid-cols-2 gap-4 p-4 bg-[--color-inset] rounded-lg border border-[--color-border]">
-          <div className="space-y-3"><span className="text-[10px] font-bold uppercase text-[--color-text-muted]">Point A</span><InputField label="x_A" value={xA} onChange={setXA} placeholder="2" /><InputField label="y_A" value={yA} onChange={setYA} placeholder="3" /></div>
-          <div className="space-y-3"><span className="text-[10px] font-bold uppercase text-[--color-text-muted]">Point B</span><InputField label="x_B" value={xB} onChange={setXB} placeholder="5" /><InputField label="y_B" value={yB} onChange={setYB} placeholder="-1" /></div>
-        </div>
-        <SolveButton onClick={tab==='coords'?solveC:solveM} label={tab==='coords'?'Calculer AB':'Calculer Milieu'} />
-        <StepDisplay steps={cSteps} result={cResult} />
-      </>}
-      {tab==='norm'&&<>
-        <p className="text-sm text-[--color-text-secondary]">||v|| = √(x² + y²)</p>
-        <div className="grid grid-cols-2 gap-4"><InputField label="x" value={vx} onChange={setVx} placeholder="3" /><InputField label="y" value={vy} onChange={setVy} placeholder="4" /></div>
-        <SolveButton onClick={solveN} label="Calculer la norme" /><StepDisplay steps={nSteps} result={nResult} />
-      </>}
-    </div>
-  );
+type Tab='coords'|'mid'|'norm'|'ops'|'relations'|'line'|'transform';
+export default function VectorTopic(){
+  const [tab,setTab]=useState<Tab>('coords');
+  const [xA,setXA]=useState('2'),[yA,setYA]=useState('3'),[xB,setXB]=useState('5'),[yB,setYB]=useState('-1');
+  const [vx,setVx]=useState('3'),[vy,setVy]=useState('4'),[wx,setWx]=useState('1'),[wy,setWy]=useState('2'),[k,setK]=useState('2');
+  const [lineA,setLineA]=useState('1'),[lineB,setLineB]=useState('-1'),[lineC,setLineC]=useState('0'),[px,setPx]=useState('2'),[py,setPy]=useState('2');
+  const [tx,setTx]=useState('2'),[ty,setTy]=useState('3'),[cx,setCx]=useState('0'),[cy,setCy]=useState('0'),[transform,setTransform]=useState<'translation'|'symmetry'|'axial'|'homothety'>('translation');
+  const [steps,setSteps]=useState<Step[]>([]),[result,setResult]=useState('');
+  const n=(v:string,name:string)=>parseNumberInput(v,name);
+  const show=(fn:()=>{steps:Step[];result:string})=>{try{const r=fn();setSteps(r.steps);setResult(r.result);}catch(e){setSteps(errorSteps(e));setResult('');}};
+  const pointInputs=<div className="grid grid-cols-2 gap-4 p-4 bg-[--color-inset] rounded-xl border border-[--color-border]"><div className="space-y-3"><span className="text-[10px] font-bold uppercase text-[--color-text-muted]">Point A</span><InputField label="xA" value={xA} onChange={setXA}/><InputField label="yA" value={yA} onChange={setYA}/></div><div className="space-y-3"><span className="text-[10px] font-bold uppercase text-[--color-text-muted]">Point B</span><InputField label="xB" value={xB} onChange={setXB}/><InputField label="yB" value={yB} onChange={setYB}/></div></div>;
+  return <div className="space-y-6"><div className="flex gap-2 flex-wrap">
+    {([['coords','Coordonnées AB'],['mid','Milieu'],['norm','Norme'],['ops','Opérations'],['relations','Colinéarité / ⟂'],['line','Droites'],['transform','Transformations']] as const).map(([id,label])=><TabButton key={id} active={tab===id} onClick={()=>setTab(id)}>{label}</TabButton>)}
+  </div>
+  {(tab==='coords'||tab==='mid')&&<>{pointInputs}<SolveButton onClick={()=>show(()=>tab==='coords'?solveVectorCoords(n(xA,'xA'),n(yA,'yA'),n(xB,'xB'),n(yB,'yB')):solveMidpoint(n(xA,'xA'),n(yA,'yA'),n(xB,'xB'),n(yB,'yB')))} label={tab==='coords'?'Calculer AB':'Calculer le milieu'}/><StepDisplay steps={steps} result={result}/></>}
+  {tab==='norm'&&<><div className="grid grid-cols-2 gap-3"><InputField label="x" value={vx} onChange={setVx}/><InputField label="y" value={vy} onChange={setVy}/></div><SolveButton onClick={()=>show(()=>solveVectorNorm(n(vx,'x'),n(vy,'y')))} label="Calculer la norme"/><StepDisplay steps={steps} result={result}/></>}
+  {tab==='ops'&&<><p className="text-sm text-[--color-text-secondary]">Somme, différence et multiplication d'un vecteur par un réel.</p><div className="grid grid-cols-2 sm:grid-cols-4 gap-3"><InputField label="ux" value={vx} onChange={setVx}/><InputField label="uy" value={vy} onChange={setVy}/><InputField label="vx" value={wx} onChange={setWx}/><InputField label="vy" value={wy} onChange={setWy}/></div><div className="grid grid-cols-3 gap-2"><button onClick={()=>show(()=>solveVectorOperation(n(vx,'ux'),n(vy,'uy'),n(wx,'vx'),n(wy,'vy'),'+'))} className="py-3 rounded-xl bg-[--color-btn-bg] text-sm font-bold cursor-pointer">u + v</button><button onClick={()=>show(()=>solveVectorOperation(n(vx,'ux'),n(vy,'uy'),n(wx,'vx'),n(wy,'vy'),'-'))} className="py-3 rounded-xl bg-[--color-btn-bg] text-sm font-bold cursor-pointer">u − v</button><button onClick={()=>show(()=>solveVectorOperation(n(vx,'ux'),n(vy,'uy'),0,0,'+',n(k,'k')))} className="py-3 rounded-xl bg-[--color-btn-bg] text-sm font-bold cursor-pointer">k·u</button></div><InputField label="k" value={k} onChange={setK}/><StepDisplay steps={steps} result={result}/></>}
+  {tab==='relations'&&<><p className="text-sm text-[--color-text-secondary]">Utilise le déterminant pour la colinéarité et le produit scalaire pour l'orthogonalité.</p><div className="grid grid-cols-2 sm:grid-cols-4 gap-3"><InputField label="ux" value={vx} onChange={setVx}/><InputField label="uy" value={vy} onChange={setVy}/><InputField label="vx" value={wx} onChange={setWx}/><InputField label="vy" value={wy} onChange={setWy}/></div><SolveButton onClick={()=>show(()=>solveVectorRelations(n(vx,'ux'),n(vy,'uy'),n(wx,'vx'),n(wy,'vy')))} label="Étudier les vecteurs"/><StepDisplay steps={steps} result={result}/></>}
+  {tab==='line'&&<><div className="rounded-xl bg-[--color-inset] p-3 text-xs text-[--color-text-secondary]">Une droite peut être déterminée par deux points, ou donnée sous la forme ax+by+c=0.</div>{pointInputs}<SolveButton onClick={()=>show(()=>solveLineThroughPoints(n(xA,'xA'),n(yA,'yA'),n(xB,'xB'),n(yB,'yB')))} label="Équation de (AB)"/><div className="border-t border-[--color-border] pt-5"><p className="text-xs font-bold mb-3">Tester si un point appartient à ax+by+c=0</p><div className="grid grid-cols-3 gap-3"><InputField label="a" value={lineA} onChange={setLineA}/><InputField label="b" value={lineB} onChange={setLineB}/><InputField label="c" value={lineC} onChange={setLineC}/></div><div className="grid grid-cols-2 gap-3 mt-3"><InputField label="xM" value={px} onChange={setPx}/><InputField label="yM" value={py} onChange={setPy}/></div><SolveButton onClick={()=>show(()=>solvePointOnLine(n(lineA,'a'),n(lineB,'b'),n(lineC,'c'),n(px,'xM'),n(py,'yM')))} label="Vérifier le point"/></div><StepDisplay steps={steps} result={result}/></>}
+  {tab==='transform'&&<><div className="flex gap-2 flex-wrap"><TabButton active={transform==='translation'} onClick={()=>setTransform('translation')}>Translation</TabButton><TabButton active={transform==='symmetry'} onClick={()=>setTransform('symmetry')}>Symétrie centrale</TabButton><TabButton active={transform==='axial'} onClick={()=>setTransform('axial')}>Symétrie axiale</TabButton><TabButton active={transform==='homothety'} onClick={()=>setTransform('homothety')}>Homothétie</TabButton></div><div className="grid grid-cols-2 gap-3"><InputField label="xM" value={tx} onChange={setTx}/><InputField label="yM" value={ty} onChange={setTy}/></div>{transform==='translation'?<div className="grid grid-cols-2 gap-3"><InputField label="ux" value={vx} onChange={setVx}/><InputField label="uy" value={vy} onChange={setVy}/></div>:transform==='axial'?<div className="grid grid-cols-3 gap-3"><InputField label="a (axe ax+by+c=0)" value={lineA} onChange={setLineA}/><InputField label="b" value={lineB} onChange={setLineB}/><InputField label="c" value={lineC} onChange={setLineC}/></div>:<div className="grid grid-cols-2 gap-3"><InputField label="xO" value={cx} onChange={setCx}/><InputField label="yO" value={cy} onChange={setCy}/>{transform==='homothety'&&<InputField label="Rapport k" value={k} onChange={setK}/>}</div>}<SolveButton onClick={()=>show(()=>transform==='translation'?solveTranslationPoint(n(tx,'xM'),n(ty,'yM'),n(vx,'ux'),n(vy,'uy')):transform==='symmetry'?solveCentralSymmetry(n(tx,'xM'),n(ty,'yM'),n(cx,'xO'),n(cy,'yO')):transform==='axial'?solveAxialSymmetryPoint(n(tx,'xM'),n(ty,'yM'),n(lineA,'a'),n(lineB,'b'),n(lineC,'c')):solveHomothetyPoint(n(tx,'xM'),n(ty,'yM'),n(cx,'xO'),n(cy,'yO'),n(k,'k')))} label="Construire l'image"/><StepDisplay steps={steps} result={result}/></>}
+  </div>;
 }

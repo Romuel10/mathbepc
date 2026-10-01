@@ -1,0 +1,83 @@
+name: Construire APK Android MathBEPC
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, v2-learning, v3-programme-bepc]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'resources/**'
+      - 'scripts/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - 'capacitor.config.json'
+      - '.github/workflows/android-apk.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  android-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Récupérer le projet
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installer Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Préparer Android SDK
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Installer les dépendances web
+        run: npm ci
+
+      - name: Vérifier MathBEPC
+        run: npm run check
+
+      - name: Installer Capacitor 8 pour la compilation Android
+        run: npm install --no-save --no-package-lock @capacitor/core@8.5.2 @capacitor/android@8.5.2 @capacitor/cli@8.5.2
+
+      - name: Construire l'application web
+        run: npm run build
+
+      - name: Créer le projet Android
+        run: |
+          npx cap add android
+          npx cap sync android
+          node scripts/apply-android-branding.mjs
+
+      - name: Compiler l'APK
+        run: |
+          chmod +x android/gradlew
+          cd android
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Préparer l'APK
+        run: |
+          mkdir -p artifact
+          cp android/app/build/outputs/apk/debug/app-debug.apk artifact/MathBEPC-Madagascar.apk
+
+      - name: Publier l'APK comme artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MathBEPC-Madagascar-APK
+          path: artifact/MathBEPC-Madagascar.apk
+          if-no-files-found: error
+          retention-days: 30

@@ -3,6 +3,9 @@ import {
   solveLinearEquation,
   solveQuadraticEquation,
   solvePercentage,
+  solveAffineStudy,
+  solveAffineImage,
+  solveAffineAntecedent,
   type Step,
 } from './mathEngine.ts';
 import type { Lang } from './i18n.ts';
@@ -70,6 +73,19 @@ export function analyseExercise(input: string, lang: Lang): SmartAnalysis | null
   const compact=normalize(original);
   const mg=lang==='mg';
 
+  // Applications affines / linéaires du programme officiel de 3e.
+  const affine=original.replace(/−/g,'-').replace(/,/g,'.').match(/f\s*\(\s*x\s*\)\s*=\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)?)\s*x\s*([+-]\s*(?:\d+(?:\.\d*)?|\.\d+))?/i);
+  if(affine){
+    const rawA=(affine[1]||'').replace(/\s/g,'');
+    const a=rawA===''||rawA==='+'?1:rawA==='-'?-1:Number(rawA);
+    const b=affine[2]?Number(affine[2].replace(/\s/g,'')):0;
+    const imageMatch=original.match(/image\s+(?:de\s+)?([+-]?(?:\d+(?:[.,]\d*)?|[.,]\d+))/i);
+    const antMatch=original.match(/ant[ée]c[ée]dent\s+(?:de\s+)?([+-]?(?:\d+(?:[.,]\d*)?|[.,]\d+))/i);
+    if(imageMatch){const x=Number(imageMatch[1].replace(',','.'));const solved=solveAffineImage(a,b,x);return {chapterId:'functions',confidence:.99,title:'Application affine',reason:mg?'Nahitana f(x)=ax+b sy fangatahana image.':'Une expression f(x)=ax+b et une demande d’image ont été reconnues.',steps:solved.steps,result:solved.result,graph:{a:0,b:a,c:b,label:`f(x)=${a}x${b>=0?'+':''}${b}`}};}
+    if(antMatch){const y=Number(antMatch[1].replace(',','.'));const solved=solveAffineAntecedent(a,b,y);return {chapterId:'functions',confidence:.99,title:'Application affine',reason:mg?'Nahitana fangatahana antécédent.':'Une demande d’antécédent a été reconnue.',steps:solved.steps,result:solved.result,graph:{a:0,b:a,c:b,label:`f(x)=${a}x${b>=0?'+':''}${b}`}};}
+    const solved=solveAffineStudy(a,b);return {chapterId:'functions',confidence:.96,title:'Application affine',reason:mg?'Nahitana endrika f(x)=ax+b.':'La forme f(x)=ax+b a été reconnue.',steps:solved.steps,result:solved.result,graph:{a:0,b:a,c:b,label:`f(x)=${a}x${b>=0?'+':''}${b}`}};
+  }
+
   const percent=compact.match(/(\d+(?:\.\d+)?)%(?:de|amin'ny|amin’ny)?(\d+(?:\.\d+)?)/i);
   if(percent){
     const p=Number(percent[1]), value=Number(percent[2]);
@@ -97,6 +113,11 @@ export function analyseExercise(input: string, lang: Lang): SmartAnalysis | null
   }
 
   const keywords:[RegExp,string,string,string][]=[
+    [/application.?affine|application.?lin[ée]aire|coefficient.?directeur|ant[ée]c[ée]dent|f\(x\)/i,'functions','Applications affines & linéaires','Applications affines / linéaires'],
+    [/angle.?inscrit|angle.?au.?centre|demi.?cercle|arc.?intercept/i,'circle','Angles inscrits','Angles inscrits / cercle'],
+    [/classe.?modale|histogramme|fr[ée]quence.?cumul|classes?.?d['’]?amplitude/i,'stats','Statistiques','Statistiques regroupées en classes'],
+    [/tronc|section.*(?:c[oô]ne|pyramide)|r[ée]duction.*(?:aire|volume)/i,'space','Géométrie dans l’espace','Sections / réduction / troncs'],
+    [/colin[ée]aire|orthogonal|[ée]quation.?de.?droite|translation|sym[ée]trie|homoth[ée]tie/i,'vectors','Vecteurs & géométrie analytique','Vecteurs / droites / transformations'],
     [/pythag|hypot|triangle.?rect/i,'geometry','Géométrie plane','Pythagore / triangle rectangle'],
     [/thal[eè]s|parall[eè]l/i,'geometry','Géométrie plane','Thalès / parallèles'],
     [/sin|cos|tan|trig/i,'geometry','Géométrie plane','Trigonométrie'],
