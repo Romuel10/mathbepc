@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const root = process.cwd();
+const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 const sourceRoot = path.join(root, 'resources', 'android');
 const resRoot = path.join(root, 'android', 'app', 'src', 'main', 'res');
 
@@ -52,13 +53,18 @@ if (fs.existsSync(splashSource)) {
 }
 
 
-// Keep Android version aligned with MathBEPC v3.
+// Keep Android version aligned with package.json.
+const versionMatch = /^(\d+)\.(\d+)\.(\d+)$/.exec(packageJson.version);
+if (!versionMatch) throw new Error('La version package.json doit respecter SemVer x.y.z');
+const [, major, minor, patch] = versionMatch.map(Number);
+if (minor > 99 || patch > 99) throw new Error('minor et patch doivent rester entre 0 et 99 pour Android');
+const versionCode = major * 10000 + minor * 100 + patch;
 const gradleFile = path.join(root, 'android', 'app', 'build.gradle');
 if (fs.existsSync(gradleFile)) {
   let gradle = fs.readFileSync(gradleFile, 'utf8');
-  gradle = gradle.replace(/versionCode\s+\d+/, 'versionCode 3');
-  gradle = gradle.replace(/versionName\s+["'][^"']+["']/, 'versionName "3.0.0"');
+  gradle = gradle.replace(/versionCode\s+\d+/, `versionCode ${versionCode}`);
+  gradle = gradle.replace(/versionName\s+["'][^"']+["']/, `versionName "${packageJson.version}"`);
   fs.writeFileSync(gradleFile, gradle);
 }
 
-console.log('Identité visuelle Android MathBEPC v3 appliquée.');
+console.log(`Identité visuelle Android MathBEPC v${packageJson.version} appliquée.`);
