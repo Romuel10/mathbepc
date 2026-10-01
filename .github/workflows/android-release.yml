@@ -38,7 +38,9 @@ jobs:
           "$SDKMANAGER" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
       - run: npm ci
       - name: Lire la version
-        run: echo "APP_VERSION=$(node -p "require('./package.json').version")" >> "$GITHUB_ENV"
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "APP_VERSION=$VERSION" >> "$GITHUB_ENV"
       - name: Auditer les dépendances de production
         run: npm run audit:deps
       - run: npm run check
