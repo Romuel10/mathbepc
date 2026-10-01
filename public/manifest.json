@@ -1,7 +1,7 @@
 {
-  "name": "MathBEPC Madagascar — Maths 3e",
+  "name": "MathBEPC Madagascar — Révision & entraînement 3e",
   "short_name": "MathBEPC",
-  "description": "Résolution de mathématiques classe de 3ème pour le BEPC de Madagascar. Tous les chapitres avec résolution étape par étape.",
+  "description": "Assistant de révision BEPC Madagascar : résolution expliquée, cours, entraînement, examen, progrès et annales de mathématiques 3e.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

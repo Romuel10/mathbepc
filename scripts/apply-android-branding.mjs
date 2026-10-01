@@ -51,4 +51,14 @@ if (fs.existsSync(splashSource)) {
   }
 }
 
+
+// Version Android de MathBEPC v2.
+const gradleFile = path.join(root, 'android', 'app', 'build.gradle');
+if (fs.existsSync(gradleFile)) {
+  let gradle = fs.readFileSync(gradleFile, 'utf8');
+  gradle = gradle.replace(/versionCode\s+\d+/, 'versionCode 2');
+  gradle = gradle.replace(/versionName\s+["'][^"']+["']/, 'versionName "2.0.0"');
+  fs.writeFileSync(gradleFile, gradle);
+}
+
 console.log('Identité visuelle Android MathBEPC appliquée.');

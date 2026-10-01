@@ -15,10 +15,10 @@
   --color-text-secondary: #8d94a8;
   --color-text-muted: #4f566b;
 
-  --color-accent: #6380ff;
-  --color-accent-hover: #7d96ff;
-  --color-accent-subtle: rgba(99,128,255,0.10);
-  --color-accent-glow: rgba(99,128,255,0.15);
+  --color-accent: #39b98a;
+  --color-accent-hover: #55c99c;
+  --color-accent-subtle: rgba(57,185,138,0.12);
+  --color-accent-glow: rgba(57,185,138,0.18);
   --color-accent-text: #ffffff;
 
   --color-btn-bg: #1e2230;
@@ -28,14 +28,14 @@
   --color-inset: #0e1018;
   --color-input-bg: #0e1018;
   --color-input-border: #272c3c;
-  --color-input-focus: rgba(99,128,255,0.30);
+  --color-input-focus: rgba(57,185,138,0.30);
 
   --color-ok-bg: rgba(52,211,153,0.08);
   --color-ok-border: rgba(52,211,153,0.15);
   --color-ok-text: #34d399;
   --color-warn-bg: rgba(251,191,36,0.06);
   --color-warn-text: #fbbf24;
-  --color-info-bg: rgba(99,128,255,0.04);
+  --color-info-bg: rgba(57,185,138,0.05);
 
   --color-scrollbar: #262b3c;
   --color-scrollbar-hover: #363d52;
@@ -53,10 +53,10 @@
   --color-text-secondary: #525b72;
   --color-text-muted: #9aa2b6;
 
-  --color-accent: #4b65d5;
-  --color-accent-hover: #3c55c3;
-  --color-accent-subtle: rgba(75,101,213,0.08);
-  --color-accent-glow: rgba(75,101,213,0.10);
+  --color-accent: #176b52;
+  --color-accent-hover: #105941;
+  --color-accent-subtle: rgba(23,107,82,0.09);
+  --color-accent-glow: rgba(23,107,82,0.12);
   --color-accent-text: #ffffff;
 
   --color-btn-bg: #e6e9f0;
@@ -66,14 +66,14 @@
   --color-inset: #eef0f4;
   --color-input-bg: #ffffff;
   --color-input-border: #d4d8e2;
-  --color-input-focus: rgba(75,101,213,0.25);
+  --color-input-focus: rgba(23,107,82,0.25);
 
   --color-ok-bg: rgba(5,150,105,0.06);
   --color-ok-border: rgba(5,150,105,0.15);
   --color-ok-text: #047857;
   --color-warn-bg: rgba(217,119,6,0.06);
   --color-warn-text: #b45309;
-  --color-info-bg: rgba(75,101,213,0.03);
+  --color-info-bg: rgba(23,107,82,0.04);
 
   --color-scrollbar: #cdd2dc;
   --color-scrollbar-hover: #b4bac8;
@@ -114,4 +114,11 @@ input[type="number"] { -moz-appearance: textfield; }
 @keyframes glow-pulse {
   0%, 100% { opacity: 0.4; }
   50% { opacity: 0.7; }
+}
+
+.safe-top { padding-top: env(safe-area-inset-top, 0px); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+button, a, input, textarea, select { touch-action: manipulation; }
+@media (max-width: 640px) {
+  input, textarea, select { font-size: 16px; }
 }

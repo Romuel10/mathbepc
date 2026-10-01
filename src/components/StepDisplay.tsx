@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react';
 import { type Step } from '../utils/mathEngine';
+import { explainStep } from '../utils/pedagogy';
+import { getStoredLanguage, type Lang } from '../utils/i18n';
 import { CheckIcon } from './Icons';
 
 interface StepDisplayProps { steps: Step[]; result?: string; }
@@ -26,11 +29,18 @@ function fmt(text: string): string {
 }
 
 export default function StepDisplay({ steps, result }: StepDisplayProps) {
+  const [lang,setLang]=useState<Lang>(()=>getStoredLanguage());
+  const [openExplanation,setOpenExplanation]=useState<number|null>(null);
+  useEffect(()=>{
+    const handler=(event:Event)=>setLang(((event as CustomEvent<Lang>).detail)||getStoredLanguage());
+    window.addEventListener('mathbepc-language',handler);
+    return()=>window.removeEventListener('mathbepc-language',handler);
+  },[]);
   if (!steps.length) return null;
   return (
     <div className="mt-8 rounded-2xl overflow-hidden border border-[--color-border] bg-[--color-card] shadow-[0_4px_24px_var(--color-glow)]">
       <div className="px-5 py-3 border-b border-[--color-border] flex items-center justify-between">
-        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[--color-text-muted]">Résolution</h3>
+        <div><h3 className="text-[10px] font-bold uppercase tracking-widest text-[--color-text-muted]">{lang==='mg'?'Vahaolana tsikelikely':'Résolution étape par étape'}</h3><p className="text-[10px] text-[--color-text-muted] mt-0.5">{lang==='mg'?'Tsindrio “Fa maninona?” raha mila fanazavana.':'Appuie sur “Pourquoi ?” pour comprendre une étape.'}</p></div>
         <span className="text-[9px] font-mono text-[--color-text-muted] bg-[--color-btn-bg] px-2 py-0.5 rounded-full">{steps.length}</span>
       </div>
       <div className="divide-y divide-[--color-border]/60">
@@ -39,31 +49,37 @@ export default function StepDisplay({ steps, result }: StepDisplayProps) {
           const ok = !warn && (s.highlight || s.type === 'result');
           const info = s.type === 'info';
           return (
-            <div key={i} className="flex gap-3 px-5 py-3 text-[13px]"
+            <div key={i} className="px-5 py-3 text-[13px]"
               style={{ backgroundColor: ok ? 'var(--color-ok-bg)' : warn ? 'var(--color-warn-bg)' : info ? 'var(--color-info-bg)' : 'transparent' }}>
-              <div className="flex-shrink-0 pt-0.5">
-                {ok ? (
-                  <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-ok-text)' }}>
-                    <CheckIcon className="w-3 h-3 text-white" />
-                  </div>
-                ) : (
-                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[9px] font-bold"
-                    style={{
-                      backgroundColor: warn ? 'var(--color-warn-bg)' : info ? 'var(--color-accent-subtle)' : 'var(--color-btn-bg)',
-                      color: warn ? 'var(--color-warn-text)' : info ? 'var(--color-accent)' : 'var(--color-text-muted)',
-                    }}>{i + 1}</span>
-                )}
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 pt-0.5">
+                  {ok ? (
+                    <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-ok-text)' }}>
+                      <CheckIcon className="w-3 h-3 text-white" />
+                    </div>
+                  ) : (
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[9px] font-bold"
+                      style={{
+                        backgroundColor: warn ? 'var(--color-warn-bg)' : info ? 'var(--color-accent-subtle)' : 'var(--color-btn-bg)',
+                        color: warn ? 'var(--color-warn-text)' : info ? 'var(--color-accent)' : 'var(--color-text-muted)',
+                      }}>{i + 1}</span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className={`font-mono leading-relaxed ${ok ? 'font-semibold' : ''}`}
+                    style={{ color: ok ? 'var(--color-ok-text)' : warn ? 'var(--color-warn-text)' : info ? 'var(--color-text-secondary)' : 'var(--color-text)' }}
+                    dangerouslySetInnerHTML={{ __html: fmt(s.text) }} />
+                  {!warn&&<button onClick={()=>setOpenExplanation(openExplanation===i?null:i)} className="block mt-2 text-[10px] font-bold text-[--color-accent] cursor-pointer">{openExplanation===i?(lang==='mg'?'Akatona':'Masquer'):(lang==='mg'?'Fa maninona?':'Pourquoi ?')}</button>}
+                </div>
               </div>
-              <span className={`font-mono leading-relaxed ${ok ? 'font-semibold' : ''}`}
-                style={{ color: ok ? 'var(--color-ok-text)' : warn ? 'var(--color-warn-text)' : info ? 'var(--color-text-secondary)' : 'var(--color-text)' }}
-                dangerouslySetInnerHTML={{ __html: fmt(s.text) }} />
+              {openExplanation===i&&!warn&&<div className="ml-8 mt-2 p-3 rounded-xl bg-[--color-inset] text-xs leading-relaxed text-[--color-text-secondary]">{explainStep(s.text,lang)}</div>}
             </div>
           );
         })}
       </div>
       {result && (
         <div className="px-5 py-4 border-t" style={{ backgroundColor: 'var(--color-ok-bg)', borderColor: 'var(--color-ok-border)' }}>
-          <p className="text-[9px] uppercase tracking-widest font-bold mb-1.5" style={{ color: 'var(--color-ok-text)', opacity: 0.5 }}>Résultat</p>
+          <p className="text-[9px] uppercase tracking-widest font-bold mb-1.5" style={{ color: 'var(--color-ok-text)', opacity: 0.65 }}>{lang==='mg'?'Valiny':'Résultat'}</p>
           <p className="text-lg font-bold font-mono" style={{ color: 'var(--color-ok-text)' }} dangerouslySetInnerHTML={{ __html: fmt(result) }} />
         </div>
       )}
