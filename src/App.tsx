@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ComponentType } from 'react';
 import FractionTopic from './topics/FractionTopic';
 import RadicalTopic from './topics/RadicalTopic';
 import AbsoluteValueTopic from './topics/AbsoluteValueTopic';
@@ -17,26 +17,40 @@ import {
   SunIcon, MoonIcon,
 } from './components/Icons';
 
-interface Chapter { id: string; title: string; icon: React.ComponentType<{className?:string}>; description: string; component: React.ComponentType; }
+type Group = 'Calculs & nombres' | 'Algèbre' | 'Géométrie' | 'Données';
+interface Chapter {
+  id: string;
+  title: string;
+  icon: ComponentType<{className?:string}>;
+  description: string;
+  keywords: string;
+  group: Group;
+  component: ComponentType;
+}
 
 const chapters: Chapter[] = [
-  { id: 'fractions', title: 'Nombres Rationnels', icon: FractionIcon, description: 'Fractions, expressions complexes, rationalisation', component: FractionTopic },
-  { id: 'radicals', title: 'Nombres Radicaux', icon: RadicalIcon, description: 'Simplification, opérations, comparaisons', component: RadicalTopic },
-  { id: 'absolute', title: 'Valeur Absolue', icon: AbsoluteIcon, description: 'Distances, équations et inéquations', component: AbsoluteValueTopic },
-  { id: 'development', title: 'Développement', icon: ExpandIcon, description: 'Identités remarquables, double distribution', component: DevelopmentTopic },
-  { id: 'factorization', title: 'Factorisation', icon: CompressIcon, description: 'Facteur commun, groupement, identités', component: FactorizationTopic },
-  { id: 'equations', title: 'Équations & Systèmes', icon: EqualsIcon, description: '1er/2nd degré, systèmes, inéquations', component: EquationTopic },
-  { id: 'vectors', title: 'Vecteurs & Analytique', icon: VectorIcon, description: 'Coordonnées, norme, milieu', component: VectorTopic },
-  { id: 'geometry', title: 'Géométrie Plane', icon: TriangleIcon, description: 'Pythagore, Thalès, trigo, aires', component: GeometryTopic },
-  { id: 'space', title: 'Géométrie de l\'Espace', icon: BoxIcon, description: 'Volumes, aires, solides composés', component: SpaceTopic },
-  { id: 'stats', title: 'Statistiques', icon: ChartIcon, description: 'Moyenne, quartiles, histogrammes', component: StatsTopic },
-  { id: 'powers', title: 'Puissances', icon: PowerIcon, description: 'Calculs et règles des puissances', component: PowersTopic },
+  { id: 'fractions', title: 'Fractions & rationnels', icon: FractionIcon, description: 'Fractions, expressions, PGCD/PPCM, rationalisation', keywords: 'fraction rationnel pgcd ppcm simplifier', group: 'Calculs & nombres', component: FractionTopic },
+  { id: 'radicals', title: 'Racines carrées', icon: RadicalIcon, description: 'Simplifier, calculer et comparer des radicaux', keywords: 'racine radical sqrt', group: 'Calculs & nombres', component: RadicalTopic },
+  { id: 'powers', title: 'Puissances', icon: PowerIcon, description: 'Calculs et règles sur les puissances', keywords: 'puissance exposant', group: 'Calculs & nombres', component: PowersTopic },
+  { id: 'absolute', title: 'Valeur absolue', icon: AbsoluteIcon, description: 'Distance, équations et inéquations', keywords: 'valeur absolue distance', group: 'Algèbre', component: AbsoluteValueTopic },
+  { id: 'development', title: 'Développement', icon: ExpandIcon, description: 'Identités remarquables et double distribution', keywords: 'développer identité remarquable distribution', group: 'Algèbre', component: DevelopmentTopic },
+  { id: 'factorization', title: 'Factorisation', icon: CompressIcon, description: 'Facteur commun, groupement et trinômes', keywords: 'factoriser facteur commun groupement', group: 'Algèbre', component: FactorizationTopic },
+  { id: 'equations', title: 'Équations & inéquations', icon: EqualsIcon, description: '1er/2nd degré, systèmes et tableaux de signes', keywords: 'équation inequation système cramer second degré', group: 'Algèbre', component: EquationTopic },
+  { id: 'vectors', title: 'Vecteurs & coordonnées', icon: VectorIcon, description: 'Coordonnées, norme et milieu', keywords: 'vecteur coordonnées milieu norme', group: 'Géométrie', component: VectorTopic },
+  { id: 'geometry', title: 'Géométrie plane', icon: TriangleIcon, description: 'Pythagore, Thalès, trigonométrie, aires', keywords: 'pythagore thales trigonométrie aire périmètre', group: 'Géométrie', component: GeometryTopic },
+  { id: 'space', title: 'Géométrie dans l’espace', icon: BoxIcon, description: 'Volumes, surfaces et solides composés', keywords: 'volume cube cylindre cone sphere pyramide', group: 'Géométrie', component: SpaceTopic },
+  { id: 'stats', title: 'Statistiques & proportionnalité', icon: ChartIcon, description: 'Moyenne, médiane, quartiles, pourcentages', keywords: 'statistique moyenne médiane quartile proportion pourcentage', group: 'Données', component: StatsTopic },
 ];
+
+const groups: Group[] = ['Calculs & nombres', 'Algèbre', 'Géométrie', 'Données'];
 
 function useTheme() {
   const [theme, setTheme] = useState<'dark'|'light'>(() => {
-    if (typeof window !== 'undefined') { const s = localStorage.getItem('mathbepc-theme'); if (s === 'light' || s === 'dark') return s; }
-    return 'dark';
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('mathbepc-theme');
+      if (saved === 'light' || saved === 'dark') return saved;
+    }
+    return 'light';
   });
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -47,216 +61,184 @@ function useTheme() {
 }
 
 function usePWA() {
-  const [ip, setIp] = useState<any>(null);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [installed, setInstalled] = useState(false);
-  const [offline, setOffline] = useState(!navigator.onLine);
+  const [offline, setOffline] = useState(() => typeof navigator !== 'undefined' ? !navigator.onLine : false);
   useEffect(() => {
-    const b = (e: Event) => { e.preventDefault(); setIp(e); };
-    const i = () => setInstalled(true);
-    const off = () => setOffline(true);
-    const on = () => setOffline(false);
-    window.addEventListener('beforeinstallprompt', b);
-    window.addEventListener('appinstalled', i);
-    window.addEventListener('offline', off);
-    window.addEventListener('online', on);
+    const beforeInstall = (event: Event) => { event.preventDefault(); setInstallPrompt(event); };
+    const onInstalled = () => setInstalled(true);
+    const onOffline = () => setOffline(true);
+    const onOnline = () => setOffline(false);
+    window.addEventListener('beforeinstallprompt', beforeInstall);
+    window.addEventListener('appinstalled', onInstalled);
+    window.addEventListener('offline', onOffline);
+    window.addEventListener('online', onOnline);
     if (window.matchMedia('(display-mode: standalone)').matches) setInstalled(true);
-    return () => { window.removeEventListener('beforeinstallprompt', b); window.removeEventListener('appinstalled', i); window.removeEventListener('offline', off); window.removeEventListener('online', on); };
+    return () => {
+      window.removeEventListener('beforeinstallprompt', beforeInstall);
+      window.removeEventListener('appinstalled', onInstalled);
+      window.removeEventListener('offline', onOffline);
+      window.removeEventListener('online', onOnline);
+    };
   }, []);
-  const install = useCallback(async () => { if (!ip) return; ip.prompt(); const r = await ip.userChoice; if (r.outcome === 'accepted') setInstalled(true); setIp(null); }, [ip]);
-  return { canInstall: !!ip && !installed, offline, install };
+  const install = useCallback(async () => {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    const choice = await installPrompt.userChoice;
+    if (choice.outcome === 'accepted') setInstalled(true);
+    setInstallPrompt(null);
+  }, [installPrompt]);
+  return { canInstall: !!installPrompt && !installed, offline, install };
 }
 
 export default function App() {
-  const [sel, setSel] = useState<string | null>(null);
-  const [mob, setMob] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [search, setSearch] = useState('');
   const { theme, toggle } = useTheme();
   const { canInstall, offline, install } = usePWA();
-  const cur = chapters.find(c => c.id === sel);
-  const idx = chapters.findIndex(c => c.id === sel);
+  const current = chapters.find(c => c.id === selected);
+  const currentIndex = chapters.findIndex(c => c.id === selected);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLocaleLowerCase('fr');
+    if (!q) return chapters;
+    return chapters.filter(ch => `${ch.title} ${ch.description} ${ch.keywords}`.toLocaleLowerCase('fr').includes(q));
+  }, [search]);
+
+  const openChapter = (id: string) => {
+    setSelected(id);
+    setMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  const goHome = () => {
+    setSelected(null);
+    setMenuOpen(false);
+    setSearch('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <div className="min-h-screen bg-[--color-surface] text-[--color-text] transition-colors duration-300">
-      {/* ===== HEADER ===== */}
-      <header className="sticky top-0 z-50 border-b border-[--color-border]/80 bg-[--color-surface]/70 backdrop-blur-2xl backdrop-saturate-150 transition-colors duration-300">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-[52px]">
-          <button onClick={() => setSel(null)} className="flex items-center gap-2.5 cursor-pointer group">
-            <div className="w-7 h-7 rounded-lg bg-[--color-accent] flex items-center justify-center shadow-[0_0_12px_var(--color-accent-glow)]">
-              <span className="text-white text-xs font-extrabold font-mono">M</span>
+      <header className="sticky top-0 z-50 border-b border-[--color-border]/80 bg-[--color-surface]/90 backdrop-blur-xl">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+          <button onClick={goHome} className="flex items-center gap-3 cursor-pointer" aria-label="Accueil MathBEPC">
+            <div className="w-9 h-9 rounded-xl bg-[--color-accent] flex items-center justify-center shadow-[0_0_14px_var(--color-accent-glow)]">
+              <span className="text-white text-sm font-extrabold font-mono">M</span>
             </div>
-            <span className="text-[13px] font-bold text-[--color-text] tracking-tight">MathBEPC</span>
+            <div className="text-left">
+              <div className="text-sm font-extrabold tracking-tight">MathBEPC</div>
+              <div className="text-[10px] text-[--color-text-muted]">Maths de 3e • Madagascar</div>
+            </div>
           </button>
 
-          <nav className="hidden lg:flex items-center gap-0.5 bg-[--color-btn-bg]/60 p-1 rounded-xl">
-            {chapters.map(ch => (
-              <button key={ch.id} onClick={() => setSel(ch.id)}
-                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-200 cursor-pointer ${
-                  sel === ch.id ? 'bg-[--color-accent] text-white shadow-[0_2px_8px_var(--color-accent-glow)]' : 'text-[--color-text-muted] hover:text-[--color-text]'
-                }`}>
-                {ch.title.split(' ')[0]}
-              </button>
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-1.5">
-            {offline && <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 text-[10px] font-semibold text-amber-400"><span className="w-1.5 h-1.5 rounded-full bg-amber-400" style={{animation:'glow-pulse 2s infinite'}} />Hors ligne</span>}
-            {canInstall && <button onClick={install} className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[--color-accent] text-white text-[11px] font-semibold cursor-pointer hover:bg-[--color-accent-hover] transition-all shadow-[0_2px_8px_var(--color-accent-glow)]">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Installer</button>}
-            <button onClick={toggle} className="w-8 h-8 rounded-xl bg-[--color-btn-bg] hover:bg-[--color-btn-bg-hover] flex items-center justify-center cursor-pointer transition-colors" title={theme==='dark'?'Mode jour':'Mode nuit'}>
-              {theme==='dark' ? <SunIcon className="w-3.5 h-3.5 text-[--color-btn-text]" /> : <MoonIcon className="w-3.5 h-3.5 text-[--color-btn-text]" />}
+          <div className="flex items-center gap-2">
+            {offline && <span className="hidden sm:inline-flex px-2.5 py-1 rounded-lg bg-amber-500/10 text-[10px] font-semibold text-amber-500">Hors ligne</span>}
+            {canInstall && <button onClick={install} className="hidden sm:inline-flex px-3 py-2 rounded-xl bg-[--color-accent] text-white text-xs font-semibold cursor-pointer">Installer</button>}
+            <button onClick={toggle} className="w-10 h-10 rounded-xl bg-[--color-btn-bg] hover:bg-[--color-btn-bg-hover] flex items-center justify-center cursor-pointer" title={theme==='dark'?'Mode clair':'Mode sombre'}>
+              {theme==='dark' ? <SunIcon className="w-4 h-4" /> : <MoonIcon className="w-4 h-4" />}
             </button>
-            <button onClick={()=>setMob(!mob)} className="lg:hidden w-8 h-8 rounded-xl bg-[--color-btn-bg] hover:bg-[--color-btn-bg-hover] flex items-center justify-center cursor-pointer transition-colors">
-              {mob ? <CloseIcon className="w-3.5 h-3.5 text-[--color-btn-text]" /> : <MenuIcon className="w-3.5 h-3.5 text-[--color-btn-text]" />}
+            <button onClick={() => setMenuOpen(v => !v)} className="h-10 px-3 rounded-xl bg-[--color-btn-bg] hover:bg-[--color-btn-bg-hover] flex items-center gap-2 cursor-pointer font-semibold text-xs" aria-expanded={menuOpen}>
+              {menuOpen ? <CloseIcon className="w-4 h-4" /> : <MenuIcon className="w-4 h-4" />}
+              <span>Chapitres</span>
             </button>
           </div>
         </div>
 
-        {mob && (
-          <div className="lg:hidden border-t border-[--color-border]/60 bg-[--color-card]/95 backdrop-blur-xl">
-            <div className="p-2 max-h-[75vh] overflow-y-auto space-y-0.5">
-              {chapters.map(ch => (
-                <button key={ch.id} onClick={() => { setSel(ch.id); setMob(false); }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left cursor-pointer transition-all duration-150 ${
-                    sel === ch.id ? 'bg-[--color-accent-subtle]' : 'hover:bg-[--color-btn-bg]'
-                  }`}>
-                  <ch.icon className={`w-4 h-4 flex-shrink-0 ${sel === ch.id ? 'text-[--color-accent]' : 'text-[--color-text-muted]'}`} />
-                  <div>
-                    <div className={`text-[13px] font-medium ${sel === ch.id ? 'text-[--color-accent]' : 'text-[--color-text]'}`}>{ch.title}</div>
-                    <div className="text-[11px] text-[--color-text-muted] leading-tight">{ch.description}</div>
-                  </div>
-                </button>
-              ))}
+        {menuOpen && (
+          <div className="border-t border-[--color-border] bg-[--color-card]/98 shadow-xl">
+            <div className="max-w-6xl mx-auto p-4 sm:p-6 max-h-[72vh] overflow-y-auto">
+              <p className="text-xs font-semibold text-[--color-text-secondary] mb-3">Choisis un chapitre</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                {chapters.map(ch => (
+                  <button key={ch.id} onClick={() => openChapter(ch.id)} className={`p-3 rounded-xl border text-left flex items-center gap-3 cursor-pointer transition-colors ${selected===ch.id?'border-[--color-accent] bg-[--color-accent-subtle]':'border-[--color-border] bg-[--color-surface] hover:border-[--color-accent]/40'}`}>
+                    <div className="w-9 h-9 rounded-lg bg-[--color-btn-bg] flex items-center justify-center flex-shrink-0"><ch.icon className="w-4 h-4 text-[--color-accent]" /></div>
+                    <div className="min-w-0"><div className="text-xs font-bold">{ch.title}</div><div className="text-[10px] text-[--color-text-muted] mt-0.5">{ch.description}</div></div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
       </header>
 
-      {/* ===== MAIN ===== */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-12">
-        {!sel ? (
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7 sm:py-10">
+        {!selected ? (
           <div className="animate-fade-up">
-            {/* Hero */}
-            <div className="relative max-w-2xl mx-auto text-center mb-16">
-              {/* Decorative glow */}
-              <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-80 h-80 bg-[--color-accent] rounded-full opacity-[0.03] blur-[100px] pointer-events-none" />
-              <div className="relative">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[--color-accent-subtle] border border-[--color-accent]/15 mb-6">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[--color-accent]" />
-                  <span className="text-[11px] font-semibold text-[--color-accent]">Programme BEPC Madagascar</span>
-                </div>
-                <h1 className="text-4xl sm:text-5xl font-extrabold text-[--color-text] leading-[1.15] tracking-tight">
-                  Résolvez vos maths,<br />
-                  <span className="bg-gradient-to-r from-[--color-accent] to-[#a78bfa] bg-clip-text text-transparent">étape par étape.</span>
-                </h1>
-                <p className="mt-5 text-[--color-text-secondary] text-[15px] leading-relaxed max-w-lg mx-auto">
-                  11 chapitres couvrant l'intégralité du programme de 3ème.
-                  Saisissez vos données, obtenez la résolution détaillée.
-                </p>
+            <section className="max-w-3xl mx-auto text-center pt-3 sm:pt-8 mb-8 sm:mb-10">
+              <span className="inline-flex px-3 py-1 rounded-full bg-[--color-accent-subtle] text-[--color-accent] text-[11px] font-bold">Révision BEPC • Classe de 3e</span>
+              <h1 className="mt-4 text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight">Quel exercice veux-tu résoudre ?</h1>
+              <p className="mt-3 text-sm sm:text-base text-[--color-text-secondary]">Choisis un chapitre ou cherche un mot comme <strong>Pythagore</strong>, <strong>fractions</strong> ou <strong>moyenne</strong>.</p>
+              <div className="mt-6 relative max-w-xl mx-auto">
+                <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher un chapitre…" className="w-full h-12 rounded-2xl border border-[--color-border] bg-[--color-card] px-5 pr-12 text-sm outline-none focus:ring-2 focus:ring-[--color-input-focus] focus:border-[--color-accent] shadow-sm" aria-label="Rechercher un chapitre" />
+                {search && <button onClick={()=>setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-[--color-btn-bg] flex items-center justify-center cursor-pointer" aria-label="Effacer la recherche"><CloseIcon className="w-3.5 h-3.5" /></button>}
               </div>
-            </div>
+              <p className="mt-3 text-[11px] text-[--color-text-muted]">Les nombres avec virgule sont acceptés : <strong>2,5</strong> fonctionne comme <strong>2.5</strong>.</p>
+            </section>
 
-            {/* Chapter Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {chapters.map((ch, i) => (
-                <button key={ch.id} onClick={() => setSel(ch.id)}
-                  className="group relative bg-[--color-card] rounded-2xl border border-[--color-border]/80 p-5
-                             hover:border-[--color-accent]/30 hover:shadow-[0_4px_24px_var(--color-glow)]
-                             transition-all duration-300 cursor-pointer text-left overflow-hidden"
-                  style={{ animationDelay: `${i * 30}ms` }}>
-                  {/* Hover glow */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-[--color-accent]/0 to-[--color-accent]/0 group-hover:from-[--color-accent]/[0.03] group-hover:to-transparent transition-all duration-500" />
-                  <div className="relative flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-[--color-btn-bg] flex items-center justify-center flex-shrink-0
-                                    group-hover:bg-[--color-accent] group-hover:shadow-[0_0_16px_var(--color-accent-glow)] transition-all duration-300">
-                      <ch.icon className="w-[18px] h-[18px] text-[--color-btn-text] group-hover:text-white transition-colors duration-300" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-[13px] font-semibold text-[--color-text] group-hover:text-[--color-accent] transition-colors">{ch.title}</h3>
-                      <p className="text-[11px] text-[--color-text-muted] mt-0.5 leading-relaxed">{ch.description}</p>
-                    </div>
-                    <ArrowRightIcon className="w-3.5 h-3.5 text-[--color-text-muted] group-hover:text-[--color-accent] transition-all flex-shrink-0 mt-1 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0" />
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {/* Features */}
-            <div className="mt-20 border-t border-[--color-border]/60 pt-12">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-3xl mx-auto">
-                {[
-                  { title: 'Résolution détaillée', desc: 'Chaque calcul décomposé étape par étape pour une compréhension totale.' },
-                  { title: 'Conforme au BEPC', desc: 'L\'intégralité du programme officiel de mathématiques de 3ème.' },
-                  { title: 'Disponible hors ligne', desc: 'Installez l\'app et révisez partout, même sans connexion.' },
-                ].map(f => (
-                  <div key={f.title} className="text-center">
-                    <h4 className="text-[13px] font-semibold text-[--color-text]">{f.title}</h4>
-                    <p className="text-[12px] text-[--color-text-muted] mt-1.5 leading-relaxed">{f.desc}</p>
-                  </div>
-                ))}
+            {filtered.length === 0 ? (
+              <div className="max-w-xl mx-auto p-6 text-center rounded-2xl border border-[--color-border] bg-[--color-card]">
+                <p className="font-semibold">Aucun chapitre trouvé</p>
+                <p className="text-xs text-[--color-text-muted] mt-1">Essaie un mot plus simple : équation, géométrie, fraction…</p>
               </div>
-            </div>
-
-            {canInstall && (
-              <div className="mt-8 sm:hidden">
-                <button onClick={install} className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-[--color-accent] text-white text-sm font-semibold cursor-pointer hover:bg-[--color-accent-hover] transition-all shadow-[0_4px_20px_var(--color-accent-glow)]">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  Installer l'application
-                </button>
+            ) : (
+              <div className="space-y-9">
+                {groups.map(group => {
+                  const items = filtered.filter(ch => ch.group === group);
+                  if (!items.length) return null;
+                  return <section key={group}>
+                    <div className="flex items-center gap-3 mb-3"><h2 className="text-sm font-extrabold">{group}</h2><div className="h-px flex-1 bg-[--color-border]" /></div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {items.map(ch => (
+                        <button key={ch.id} onClick={()=>openChapter(ch.id)} className="group p-5 rounded-2xl bg-[--color-card] border border-[--color-border] hover:border-[--color-accent]/50 hover:shadow-[0_6px_24px_var(--color-glow)] transition-all text-left cursor-pointer">
+                          <div className="flex items-start gap-4">
+                            <div className="w-11 h-11 rounded-xl bg-[--color-accent-subtle] flex items-center justify-center flex-shrink-0"><ch.icon className="w-5 h-5 text-[--color-accent]" /></div>
+                            <div className="min-w-0 flex-1"><h3 className="text-sm font-bold group-hover:text-[--color-accent]">{ch.title}</h3><p className="text-xs text-[--color-text-muted] mt-1 leading-relaxed">{ch.description}</p></div>
+                            <ArrowRightIcon className="w-4 h-4 mt-1 text-[--color-text-muted] group-hover:text-[--color-accent]" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </section>;
+                })}
               </div>
             )}
+
+            <section className="mt-10 p-5 rounded-2xl bg-[--color-accent-subtle] border border-[--color-accent]/15">
+              <h3 className="text-sm font-bold">Comment utiliser MathBEPC ?</h3>
+              <div className="mt-3 grid sm:grid-cols-3 gap-3 text-xs text-[--color-text-secondary]">
+                <p><strong>1.</strong> Choisis le chapitre de ton exercice.</p>
+                <p><strong>2.</strong> Entre les nombres de l’énoncé.</p>
+                <p><strong>3.</strong> Lis chaque étape avant le résultat final.</p>
+              </div>
+            </section>
+
+            {canInstall && <button onClick={install} className="sm:hidden mt-5 w-full py-3.5 rounded-2xl bg-[--color-accent] text-white text-sm font-bold cursor-pointer">Installer MathBEPC sur ce téléphone</button>}
           </div>
         ) : (
           <div className="max-w-3xl mx-auto animate-fade-up">
-            <button onClick={() => setSel(null)} className="inline-flex items-center gap-1.5 text-[11px] text-[--color-text-muted] hover:text-[--color-accent] transition-colors cursor-pointer mb-8 group">
-              <ArrowLeftIcon className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform" /> Tous les chapitres
-            </button>
-
-            {/* Chapter Header */}
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-12 h-12 rounded-2xl bg-[--color-accent] flex items-center justify-center shadow-[0_4px_20px_var(--color-accent-glow)]">
-                {cur && <cur.icon className="w-5 h-5 text-white" />}
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-[--color-text] leading-tight tracking-tight">{cur?.title}</h2>
-                <p className="text-[12px] text-[--color-text-muted] mt-0.5">{cur?.description}</p>
-              </div>
+            <div className="flex items-center justify-between gap-3 mb-5">
+              <button onClick={goHome} className="inline-flex items-center gap-2 h-10 px-3 rounded-xl bg-[--color-btn-bg] hover:bg-[--color-btn-bg-hover] text-xs font-semibold cursor-pointer"><ArrowLeftIcon className="w-3.5 h-3.5" /> Accueil</button>
+              <button onClick={()=>setMenuOpen(true)} className="inline-flex items-center gap-2 h-10 px-3 rounded-xl border border-[--color-border] text-xs font-semibold cursor-pointer"><MenuIcon className="w-3.5 h-3.5" /> Changer de chapitre</button>
             </div>
 
-            {/* Content Card */}
-            <div className="bg-[--color-card] rounded-2xl border border-[--color-border]/80 p-5 sm:p-8 shadow-[0_4px_32px_var(--color-glow)] transition-colors duration-300">
-              {cur && <cur.component />}
+            <div className="flex items-center gap-4 mb-6 p-4 rounded-2xl bg-[--color-accent-subtle] border border-[--color-accent]/15">
+              <div className="w-12 h-12 rounded-xl bg-[--color-accent] flex items-center justify-center shadow-[0_4px_18px_var(--color-accent-glow)]">{current && <current.icon className="w-5 h-5 text-white" />}</div>
+              <div><div className="text-[10px] uppercase tracking-widest font-bold text-[--color-accent]">{current?.group}</div><h2 className="text-xl font-extrabold mt-0.5">{current?.title}</h2><p className="text-xs text-[--color-text-muted] mt-0.5">{current?.description}</p></div>
             </div>
 
-            {/* Prev / Next */}
-            <div className="flex items-center justify-between mt-8 pt-6 border-t border-[--color-border]/60">
-              {idx > 0 ? (
-                <button onClick={() => setSel(chapters[idx-1].id)} className="group flex items-center gap-2 text-[11px] text-[--color-text-muted] hover:text-[--color-accent] transition-colors cursor-pointer">
-                  <ArrowLeftIcon className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform" /> <span className="hidden sm:inline">{chapters[idx-1].title}</span><span className="sm:hidden">Précédent</span>
-                </button>
-              ) : <div />}
-              {idx < chapters.length-1 ? (
-                <button onClick={() => setSel(chapters[idx+1].id)} className="group flex items-center gap-2 text-[11px] text-[--color-text-muted] hover:text-[--color-accent] transition-colors cursor-pointer">
-                  <span className="hidden sm:inline">{chapters[idx+1].title}</span><span className="sm:hidden">Suivant</span> <ArrowRightIcon className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                </button>
-              ) : <div />}
+            <div className="bg-[--color-card] rounded-2xl border border-[--color-border] p-4 sm:p-7 shadow-[0_4px_28px_var(--color-glow)]">{current && <current.component />}</div>
+
+            <div className="grid grid-cols-2 gap-3 mt-6">
+              <button disabled={currentIndex<=0} onClick={()=>currentIndex>0&&openChapter(chapters[currentIndex-1].id)} className="min-h-12 rounded-xl border border-[--color-border] px-3 text-left disabled:opacity-30 cursor-pointer disabled:cursor-default"><span className="block text-[10px] text-[--color-text-muted]">Précédent</span><span className="text-xs font-semibold">{currentIndex>0?chapters[currentIndex-1].title:'—'}</span></button>
+              <button disabled={currentIndex<0||currentIndex>=chapters.length-1} onClick={()=>currentIndex>=0&&currentIndex<chapters.length-1&&openChapter(chapters[currentIndex+1].id)} className="min-h-12 rounded-xl border border-[--color-border] px-3 text-right disabled:opacity-30 cursor-pointer disabled:cursor-default"><span className="block text-[10px] text-[--color-text-muted]">Suivant</span><span className="text-xs font-semibold">{currentIndex>=0&&currentIndex<chapters.length-1?chapters[currentIndex+1].title:'—'}</span></button>
             </div>
           </div>
         )}
       </main>
 
-      {/* Offline toast */}
-      {offline && (
-        <div className="sm:hidden fixed bottom-4 left-4 right-4 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-[--color-card-elevated] border border-[--color-border] shadow-xl backdrop-blur-xl">
-          <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" style={{animation:'glow-pulse 2s infinite'}} />
-          <span className="text-[11px] text-[--color-text-secondary]">Hors ligne — toutes les fonctionnalités disponibles</span>
-        </div>
-      )}
-
-      <footer className="border-t border-[--color-border]/40 mt-12 transition-colors duration-300">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-1.5">
-          <p className="text-[11px] text-[--color-text-muted]">MathBEPC — Programme BEPC Madagascar</p>
-          <p className="text-[10px] text-[--color-text-muted]/50">11 chapitres · Résolution étape par étape</p>
-        </div>
-      </footer>
+      {offline && <div className="sm:hidden fixed bottom-4 left-4 right-4 z-50 px-4 py-3 rounded-2xl bg-[--color-card-elevated] border border-[--color-border] shadow-xl text-xs text-center">Mode hors ligne actif</div>}
+      <footer className="border-t border-[--color-border] mt-10"><div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 text-center text-[10px] text-[--color-text-muted]">MathBEPC • Révision de mathématiques pour la 3e • Résolution étape par étape</div></footer>
     </div>
   );
 }

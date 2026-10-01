@@ -3,8 +3,12 @@ import { CheckIcon } from './Icons';
 
 interface StepDisplayProps { steps: Step[]; result?: string; }
 
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
 function fmt(text: string): string {
-  return text
+  return escapeHtml(text)
     .replace(/√(\d+)/g, '<span style="color:var(--color-accent);font-weight:600">√$1</span>')
     .replace(/x²/g, 'x<sup>2</sup>').replace(/x³/g, 'x<sup>3</sup>')
     .replace(/(\d+)x²/g, '$1x<sup>2</sup>').replace(/(\d+)x³/g, '$1x<sup>3</sup>')
@@ -31,8 +35,8 @@ export default function StepDisplay({ steps, result }: StepDisplayProps) {
       </div>
       <div className="divide-y divide-[--color-border]/60">
         {steps.map((s, i) => {
-          const ok = s.highlight || s.type === 'result';
           const warn = s.type === 'warning';
+          const ok = !warn && (s.highlight || s.type === 'result');
           const info = s.type === 'info';
           return (
             <div key={i} className="flex gap-3 px-5 py-3 text-[13px]"

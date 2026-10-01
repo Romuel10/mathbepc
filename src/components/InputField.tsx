@@ -12,6 +12,9 @@ export default function InputField({ label, value, onChange, placeholder, type =
       <label className="block text-[10px] font-semibold uppercase tracking-widest text-[--color-text-muted] mb-1.5 group-focus-within:text-[--color-accent] transition-colors">{label}</label>
       <input
         type={type}
+        inputMode={type === 'text' ? 'decimal' : undefined}
+        autoComplete="off"
+        aria-label={label}
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder || label}
