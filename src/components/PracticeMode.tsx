@@ -5,7 +5,7 @@ import { recordAttempt } from '../utils/progress';
 import MathKeyboard from './MathKeyboard';
 import StepDisplay from './StepDisplay';
 
-const chapterNames:Record<string,{fr:string;mg:string}>={fractions:{fr:'Fractions',mg:'Fraction'},radicals:{fr:'Racines carrées',mg:'Racine carrée'},powers:{fr:'Puissances',mg:'Puissance'},equations:{fr:'Équations',mg:'Équation'},geometry:{fr:'Géométrie',mg:'Géométrie'},stats:{fr:'Pourcentages',mg:'Pourcentage'},development:{fr:'Développement',mg:'Développement'},factorization:{fr:'Factorisation',mg:'Factorisation'}};
+const chapterNames:Record<string,{fr:string;mg:string}>={fractions:{fr:'Fractions',mg:'Fraction'},radicals:{fr:'Racines carrées',mg:'Racine carrée'},powers:{fr:'Puissances',mg:'Puissance'},equations:{fr:'Équations',mg:'Équation'},functions:{fr:'Applications affines',mg:'Application affine'},geometry:{fr:'Géométrie',mg:'Géométrie'},circle:{fr:'Angles inscrits',mg:'Angle inscrit'},vectors:{fr:'Vecteurs & droites',mg:'Vecteur & droite'},space:{fr:'Géométrie dans l’espace',mg:'Géométrie espace'},stats:{fr:'Statistiques',mg:'Statistique'},development:{fr:'Développement',mg:'Développement'},factorization:{fr:'Factorisation',mg:'Factorisation'}};
 
 export default function PracticeMode({lang}:{lang:Lang}){
   const [level,setLevel]=useState<PracticeLevel>('easy');

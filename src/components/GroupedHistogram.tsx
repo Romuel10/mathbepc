@@ -1,0 +1,7 @@
+import type { GroupedStatsRow } from '../utils/mathEngine';
+export default function GroupedHistogram({rows}:{rows:GroupedStatsRow[]}){
+  if(!rows.length)return null;
+  const W=420,H=250,pad=34; const max=Math.max(...rows.map(r=>r.freq),1); const totalWidth=rows[rows.length-1].upper-rows[0].lower;
+  const x=(v:number)=>pad+(v-rows[0].lower)/totalWidth*(W-2*pad); const y=(f:number)=>H-pad-f/max*(H-2*pad);
+  return <div className="mt-5 rounded-2xl border border-[--color-border] bg-[--color-card] p-4"><p className="text-xs font-bold mb-3">Histogramme des effectifs</p><svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[560px] mx-auto"><line x1={pad} y1={H-pad} x2={W-pad} y2={H-pad} stroke="var(--color-text-secondary)"/><line x1={pad} y1={pad} x2={pad} y2={H-pad} stroke="var(--color-text-secondary)"/>{rows.map((r,i)=>{const left=x(r.lower),right=x(r.upper),top=y(r.freq);return <g key={i}><rect x={left} y={top} width={Math.max(1,right-left)} height={H-pad-top} fill="var(--color-accent)" opacity=".72" stroke="var(--color-surface)"/><text x={(left+right)/2} y={H-pad+13} textAnchor="middle" fontSize="8" fill="var(--color-text-muted)">{r.lower}</text><text x={(left+right)/2} y={top-4} textAnchor="middle" fontSize="8" fill="var(--color-text-secondary)">{r.freq}</text>{i===rows.length-1&&<text x={right} y={H-pad+13} textAnchor="middle" fontSize="8" fill="var(--color-text-muted)">{r.upper}</text>}</g>})}</svg></div>;
+}

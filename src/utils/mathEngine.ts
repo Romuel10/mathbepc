@@ -1655,3 +1655,249 @@ export function solveSpaceVolume(shape: string, p: {[k:string]:number}): { resul
   if (showA && A > 0) steps.push({ text: `A ≈ ${A.toFixed(4)}`, highlight: true, type: 'result' });
   return { result: `V ≈ ${V.toFixed(2)}${showA&&A>0?`, A ≈ ${A.toFixed(2)}`:''}`, steps };
 }
+
+// ==================== OFFICIAL 3e MADAGASCAR COMPLEMENTS ====================
+function fmtNumber(n: number, digits = 6): string {
+  if (!Number.isFinite(n)) throw new Error('Nombre invalide');
+  if (Math.abs(n) < 1e-12) return '0';
+  if (Number.isInteger(n)) return `${n}`;
+  return Number(n.toFixed(digits)).toString();
+}
+
+function formatAffine(a: number, b: number): string {
+  if (a === 0) return fmtNumber(b);
+  const ax = a === 1 ? 'x' : a === -1 ? '-x' : `${fmtNumber(a)}x`;
+  if (b === 0) return ax;
+  return `${ax} ${b > 0 ? '+' : '-'} ${fmtNumber(Math.abs(b))}`;
+}
+
+export function solveAffineImage(a: number, b: number, x: number): { result: string; steps: Step[] } {
+  assertFiniteNumbers(a,b,x);
+  const y = a*x+b;
+  const steps:Step[]=[
+    {text:`f(x) = ${formatAffine(a,b)}`,type:'info'},
+    {text:`f(${fmtNumber(x)}) = ${fmtNumber(a)}×${fmtNumber(x)} ${b>=0?'+':'-'} ${fmtNumber(Math.abs(b))}`,type:'calc'},
+    {text:`f(${fmtNumber(x)}) = ${fmtNumber(y)}`,type:'result',highlight:true},
+  ];
+  return {result:`f(${fmtNumber(x)}) = ${fmtNumber(y)}`,steps};
+}
+
+export function solveAffineAntecedent(a: number, b: number, y: number): { result: string; steps: Step[] } {
+  assertFiniteNumbers(a,b,y);
+  const steps:Step[]=[{text:`On cherche x tel que ${formatAffine(a,b)} = ${fmtNumber(y)}.`,type:'info'}];
+  if (Math.abs(a)<1e-12){
+    if (Math.abs(b-y)<1e-12){steps.push({text:'Tous les réels conviennent.',type:'result',highlight:true});return {result:'Tous les réels',steps};}
+    steps.push({text:'Aucun réel ne convient.',type:'result',highlight:true});return {result:'Aucun antécédent',steps};
+  }
+  const x=(y-b)/a;
+  steps.push({text:`${fmtNumber(a)}x = ${fmtNumber(y-b)}`,type:'calc'});
+  steps.push({text:`x = ${fmtNumber(y-b)} ÷ ${fmtNumber(a)} = ${fmtNumber(x)}`,type:'result',highlight:true});
+  return {result:`x = ${fmtNumber(x)}`,steps};
+}
+
+export function solveAffineStudy(a: number, b: number): { result: string; steps: Step[]; zero: number|null; variation:'croissante'|'constante'|'décroissante' } {
+  assertFiniteNumbers(a,b);
+  const variation = a>0?'croissante':a<0?'décroissante':'constante';
+  const zero = Math.abs(a)<1e-12 ? null : -b/a;
+  const steps:Step[]=[
+    {text:`f(x) = ${formatAffine(a,b)}`,type:'info'},
+    {text:`Coefficient directeur a = ${fmtNumber(a)} : f est ${variation}.`,type:'calc'},
+    {text:`Ordonnée à l'origine : f(0) = ${fmtNumber(b)}.`,type:'calc'},
+  ];
+  if(zero!==null) steps.push({text:`Zéro de f : ${formatAffine(a,b)} = 0 ⇒ x = ${fmtNumber(zero)}.`,type:'calc'});
+  else if(b===0) steps.push({text:'f(x)=0 pour tout réel x.',type:'calc'});
+  else steps.push({text:'Cette fonction constante ne s’annule pas.',type:'calc'});
+  steps.push({text:`Variation : ${variation}`,type:'result',highlight:true});
+  return {result:`f(x)=${formatAffine(a,b)} ; ${variation}`,steps,zero,variation};
+}
+
+export function solveAffineIntersection(a: number,b: number,c: number,d: number): {result:string;steps:Step[]} {
+  assertFiniteNumbers(a,b,c,d);
+  const steps:Step[]=[{text:`f(x)=${formatAffine(a,b)} et g(x)=${formatAffine(c,d)}`,type:'info'}];
+  if(Math.abs(a-c)<1e-12){
+    if(Math.abs(b-d)<1e-12){steps.push({text:'Les deux droites sont confondues.',type:'result',highlight:true});return {result:'Droites confondues',steps};}
+    steps.push({text:'Même coefficient directeur, ordonnées à l’origine différentes : les droites sont parallèles.',type:'result',highlight:true});return {result:'Aucune intersection',steps};
+  }
+  const x=(d-b)/(a-c); const y=a*x+b;
+  steps.push({text:`${formatAffine(a,b)} = ${formatAffine(c,d)}`,type:'calc'});
+  steps.push({text:`x = ${fmtNumber(x)}`,type:'calc'});
+  steps.push({text:`y = ${fmtNumber(y)}`,type:'calc'});
+  steps.push({text:`Point d'intersection I(${fmtNumber(x)} ; ${fmtNumber(y)})`,type:'result',highlight:true});
+  return {result:`I(${fmtNumber(x)} ; ${fmtNumber(y)})`,steps};
+}
+
+export function solveVectorOperation(ax:number,ay:number,bx:number,by:number,op:'+'|'-',k?:number): {result:string;steps:Step[]} {
+  assertFiniteNumbers(ax,ay,bx,by);
+  const steps:Step[]=[];
+  if(k!==undefined){
+    assertFiniteNumbers(k);
+    const x=k*ax,y=k*ay;
+    steps.push({text:`${fmtNumber(k)}u = (${fmtNumber(k)}×${fmtNumber(ax)} ; ${fmtNumber(k)}×${fmtNumber(ay)})`,type:'calc'});
+    steps.push({text:`${fmtNumber(k)}u = (${fmtNumber(x)} ; ${fmtNumber(y)})`,type:'result',highlight:true});
+    return {result:`(${fmtNumber(x)} ; ${fmtNumber(y)})`,steps};
+  }
+  const x=op==='+'?ax+bx:ax-bx, y=op==='+'?ay+by:ay-by;
+  steps.push({text:`u ${op} v = (${fmtNumber(ax)} ${op} ${fmtNumber(bx)} ; ${fmtNumber(ay)} ${op} ${fmtNumber(by)})`,type:'calc'});
+  steps.push({text:`u ${op} v = (${fmtNumber(x)} ; ${fmtNumber(y)})`,type:'result',highlight:true});
+  return {result:`(${fmtNumber(x)} ; ${fmtNumber(y)})`,steps};
+}
+
+export function solveVectorRelations(ax:number,ay:number,bx:number,by:number): {result:string;steps:Step[];collinear:boolean;orthogonal:boolean} {
+  assertFiniteNumbers(ax,ay,bx,by);
+  const det=ax*by-ay*bx, dot=ax*bx+ay*by;
+  const collinear=Math.abs(det)<1e-10, orthogonal=Math.abs(dot)<1e-10;
+  const steps:Step[]=[
+    {text:`det(u,v) = ${fmtNumber(ax)}×${fmtNumber(by)} − ${fmtNumber(ay)}×${fmtNumber(bx)} = ${fmtNumber(det)}`,type:'calc'},
+    {text:collinear?'det(u,v)=0 : les vecteurs sont colinéaires.':'det(u,v)≠0 : les vecteurs ne sont pas colinéaires.',type:'calc'},
+    {text:`u·v = ${fmtNumber(ax)}×${fmtNumber(bx)} + ${fmtNumber(ay)}×${fmtNumber(by)} = ${fmtNumber(dot)}`,type:'calc'},
+    {text:orthogonal?'u·v=0 : les vecteurs sont orthogonaux.':'u·v≠0 : les vecteurs ne sont pas orthogonaux.',type:'calc'},
+  ];
+  const labels=[collinear?'colinéaires':'non colinéaires',orthogonal?'orthogonaux':'non orthogonaux'];
+  steps.push({text:labels.join(' ; '),type:'result',highlight:true});
+  return {result:labels.join(' ; '),steps,collinear,orthogonal};
+}
+
+export function solveLineThroughPoints(x1:number,y1:number,x2:number,y2:number): {result:string;steps:Step[];a:number;b:number;c:number;slope:number|null} {
+  assertFiniteNumbers(x1,y1,x2,y2);
+  if(Math.abs(x1-x2)<1e-12 && Math.abs(y1-y2)<1e-12) throw new Error('Deux points distincts sont nécessaires');
+  const steps:Step[]=[{text:`A(${fmtNumber(x1)} ; ${fmtNumber(y1)}), B(${fmtNumber(x2)} ; ${fmtNumber(y2)})`,type:'info'}];
+  if(Math.abs(x1-x2)<1e-12){
+    steps.push({text:`Les deux points ont la même abscisse : x = ${fmtNumber(x1)}.`,type:'result',highlight:true});
+    return {result:`x = ${fmtNumber(x1)}`,steps,a:1,b:0,c:-x1,slope:null};
+  }
+  const m=(y2-y1)/(x2-x1); const p=y1-m*x1;
+  steps.push({text:`m = (yB−yA)/(xB−xA) = (${fmtNumber(y2)}−${fmtNumber(y1)})/(${fmtNumber(x2)}−${fmtNumber(x1)}) = ${fmtNumber(m)}`,type:'calc'});
+  steps.push({text:`p = yA − m·xA = ${fmtNumber(p)}`,type:'calc'});
+  steps.push({text:`(AB) : y = ${formatAffine(m,p)}`,type:'result',highlight:true});
+  return {result:`y = ${formatAffine(m,p)}`,steps,a:m,b:-1,c:p,slope:m};
+}
+
+export function solvePointOnLine(a:number,b:number,c:number,x:number,y:number): {result:string;steps:Step[];belongs:boolean} {
+  assertFiniteNumbers(a,b,c,x,y);
+  if(Math.abs(a)<1e-12&&Math.abs(b)<1e-12) throw new Error('Équation de droite invalide');
+  const value=a*x+b*y+c; const belongs=Math.abs(value)<1e-10;
+  const steps:Step[]=[{text:`On remplace x=${fmtNumber(x)} et y=${fmtNumber(y)} dans ${fmtNumber(a)}x + ${fmtNumber(b)}y + ${fmtNumber(c)} = 0.`,type:'info'},
+    {text:`${fmtNumber(a*x)} + ${fmtNumber(b*y)} + ${fmtNumber(c)} = ${fmtNumber(value)}`,type:'calc'},
+    {text:belongs?'Le résultat vaut 0 : le point appartient à la droite.':'Le résultat ne vaut pas 0 : le point n’appartient pas à la droite.',type:'result',highlight:true}];
+  return {result:belongs?'Le point appartient à la droite':'Le point n’appartient pas à la droite',steps,belongs};
+}
+
+export function solveTranslationPoint(x:number,y:number,vx:number,vy:number): {result:string;steps:Step[]} {
+  assertFiniteNumbers(x,y,vx,vy); const xp=x+vx,yp=y+vy;
+  const steps:Step[]=[{text:`M' = M + u = (${fmtNumber(x)}+${fmtNumber(vx)} ; ${fmtNumber(y)}+${fmtNumber(vy)})`,type:'calc'},{text:`M'(${fmtNumber(xp)} ; ${fmtNumber(yp)})`,type:'result',highlight:true}];
+  return {result:`M'(${fmtNumber(xp)} ; ${fmtNumber(yp)})`,steps};
+}
+
+export function solveCentralSymmetry(x:number,y:number,xo:number,yo:number): {result:string;steps:Step[]} {
+  assertFiniteNumbers(x,y,xo,yo); const xp=2*xo-x,yp=2*yo-y;
+  const steps:Step[]=[{text:'Le centre O est le milieu de [MM’].',type:'info'},{text:`xM' = 2×${fmtNumber(xo)} − ${fmtNumber(x)} = ${fmtNumber(xp)}`,type:'calc'},{text:`yM' = 2×${fmtNumber(yo)} − ${fmtNumber(y)} = ${fmtNumber(yp)}`,type:'calc'},{text:`M'(${fmtNumber(xp)} ; ${fmtNumber(yp)})`,type:'result',highlight:true}];
+  return {result:`M'(${fmtNumber(xp)} ; ${fmtNumber(yp)})`,steps};
+}
+
+export function solveHomothetyPoint(x:number,y:number,xo:number,yo:number,k:number): {result:string;steps:Step[]} {
+  assertFiniteNumbers(x,y,xo,yo,k); const xp=xo+k*(x-xo),yp=yo+k*(y-yo);
+  const steps:Step[]=[{text:`OM' = ${fmtNumber(k)}·OM`,type:'info'},{text:`xM' = ${fmtNumber(xo)} + ${fmtNumber(k)}(${fmtNumber(x)}−${fmtNumber(xo)}) = ${fmtNumber(xp)}`,type:'calc'},{text:`yM' = ${fmtNumber(yo)} + ${fmtNumber(k)}(${fmtNumber(y)}−${fmtNumber(yo)}) = ${fmtNumber(yp)}`,type:'calc'},{text:`M'(${fmtNumber(xp)} ; ${fmtNumber(yp)})`,type:'result',highlight:true}];
+  return {result:`M'(${fmtNumber(xp)} ; ${fmtNumber(yp)})`,steps};
+}
+
+export function solveInscribedAngle(mode:'centerToInscribed'|'inscribedToCenter'|'semicircle'|'sameArc',angle?:number): {result:string;steps:Step[]} {
+  const steps:Step[]=[];
+  if(mode==='semicircle'){
+    steps.push({text:'Un angle inscrit qui intercepte un diamètre est droit.',type:'info'},{text:'Angle inscrit = 90°',type:'result',highlight:true});
+    return {result:'90°',steps};
+  }
+  if(mode==='sameArc'){
+    if(angle===undefined) throw new Error('Mesure d’un angle requise'); assertFiniteNumbers(angle);
+    if(angle<=0||angle>=180) throw new Error('Angle invalide');
+    steps.push({text:'Deux angles inscrits interceptant le même arc ont la même mesure.',type:'info'},{text:`Deuxième angle = ${fmtNumber(angle)}°`,type:'result',highlight:true});
+    return {result:`${fmtNumber(angle)}°`,steps};
+  }
+  if(angle===undefined) throw new Error('Mesure d’un angle requise'); assertFiniteNumbers(angle);
+  if(angle<=0||angle>=360) throw new Error('Angle invalide');
+  if(mode==='centerToInscribed'){
+    const r=angle/2;
+    steps.push({text:'Un angle inscrit mesure la moitié de l’angle au centre associé.',type:'info'},{text:`Angle inscrit = ${fmtNumber(angle)}° ÷ 2 = ${fmtNumber(r)}°`,type:'result',highlight:true});
+    return {result:`${fmtNumber(r)}°`,steps};
+  }
+  const r=angle*2;
+  if(r>360) throw new Error('Mesure impossible pour l’angle au centre');
+  steps.push({text:'L’angle au centre associé mesure le double de l’angle inscrit.',type:'info'},{text:`Angle au centre = 2 × ${fmtNumber(angle)}° = ${fmtNumber(r)}°`,type:'result',highlight:true});
+  return {result:`${fmtNumber(r)}°`,steps};
+}
+
+export function solveLineCirclePosition(distance:number,radius:number): {result:string;steps:Step[]} {
+  assertFiniteNumbers(distance,radius); if(distance<0||radius<=0) throw new Error('Distance et rayon doivent être positifs');
+  const eps=1e-10; let result:string;
+  if(Math.abs(distance-radius)<eps) result='La droite est tangente au cercle';
+  else if(distance<radius) result='La droite est sécante au cercle';
+  else result='La droite est extérieure au cercle';
+  const steps:Step[]=[{text:`Distance du centre à la droite d = ${fmtNumber(distance)}, rayon r = ${fmtNumber(radius)}.`,type:'info'},{text:distance<radius?'d < r':Math.abs(distance-radius)<eps?'d = r':'d > r',type:'calc'},{text:result,type:'result',highlight:true}];
+  return {result,steps};
+}
+
+export function solveScaleReduction(k:number,value:number,kind:'length'|'area'|'volume'): {result:string;steps:Step[]} {
+  assertFiniteNumbers(k,value); if(k<=0) throw new Error('Le coefficient k doit être strictement positif'); if(value<0) throw new Error('La grandeur doit être positive');
+  const exponent=kind==='length'?1:kind==='area'?2:3; const factor=Math.pow(k,exponent); const result=value*factor;
+  const name=kind==='length'?'longueurs':kind==='area'?'aires':'volumes';
+  const steps:Step[]=[{text:`Coefficient de réduction/agrandissement k = ${fmtNumber(k)}.`,type:'info'},{text:`Les ${name} sont multiplié${kind==='length'?'es':'s'} par k${exponent===1?'':exponent===2?'²':'³'} = ${fmtNumber(factor)}.`,type:'calc'},{text:`Nouvelle grandeur = ${fmtNumber(value)} × ${fmtNumber(factor)} = ${fmtNumber(result)}`,type:'result',highlight:true}];
+  return {result:fmtNumber(result),steps};
+}
+
+export function solveFrustumFromSimilarity(fullVolume:number,k:number): {result:string;steps:Step[]} {
+  assertFiniteNumbers(fullVolume,k); if(fullVolume<=0) throw new Error('Le volume doit être positif'); if(k<=0||k>=1) throw new Error('Pour un tronc obtenu par réduction, k doit être compris entre 0 et 1');
+  const small=fullVolume*k*k*k; const frustum=fullVolume-small;
+  const steps:Step[]=[{text:`Le petit solide est une réduction de rapport k=${fmtNumber(k)}.`,type:'info'},{text:`Vpetit = k³ × Vgrand = ${fmtNumber(k*k*k)} × ${fmtNumber(fullVolume)} = ${fmtNumber(small)}`,type:'calc'},{text:`Vtronc = Vgrand − Vpetit = ${fmtNumber(fullVolume)} − ${fmtNumber(small)} = ${fmtNumber(frustum)}`,type:'result',highlight:true}];
+  return {result:`Vtronc = ${fmtNumber(frustum)}`,steps};
+}
+
+export interface GroupedStatsRow { lower:number; upper:number; center:number; freq:number; relative:number; cumulative:number; cumulativeRelative:number; }
+export interface GroupedStatsResult { n:number; mean:number; modalClasses:string[]; rows:GroupedStatsRow[]; steps:Step[]; result:string; }
+export function solveGroupedStatistics(bounds:number[],frequencies:number[]): GroupedStatsResult {
+  if(bounds.length!==frequencies.length+1||frequencies.length===0) throw new Error('Il faut une borne de plus que le nombre de classes');
+  bounds.forEach(v=>assertFiniteNumbers(v)); frequencies.forEach(v=>assertFiniteNumbers(v));
+  for(let i=1;i<bounds.length;i++) if(bounds[i]<=bounds[i-1]) throw new Error('Les bornes doivent être strictement croissantes');
+  if(frequencies.some(f=>f<0||!Number.isInteger(f))) throw new Error('Les effectifs doivent être des entiers positifs ou nuls');
+  const amplitudes=frequencies.map((_,i)=>bounds[i+1]-bounds[i]); const amp=amplitudes[0];
+  if(amplitudes.some(a=>Math.abs(a-amp)>1e-9)) throw new Error('Le programme de 3e demande ici des classes d’égale amplitude');
+  const n=frequencies.reduce((s,f)=>s+f,0); if(n<=0) throw new Error('Effectif total nul');
+  let cumulative=0, weighted=0;
+  const rows:GroupedStatsRow[]=frequencies.map((f,i)=>{const center=(bounds[i]+bounds[i+1])/2; cumulative+=f; weighted+=center*f; return {lower:bounds[i],upper:bounds[i+1],center,freq:f,relative:f/n,cumulative,cumulativeRelative:cumulative/n};});
+  const mean=weighted/n; const max=Math.max(...frequencies); const modalClasses=rows.filter(r=>r.freq===max).map(r=>`[${fmtNumber(r.lower)} ; ${fmtNumber(r.upper)}[`);
+  const steps:Step[]=[{text:`Effectif total N = ${n}`,type:'info'}];
+  rows.forEach(r=>steps.push({text:`[${fmtNumber(r.lower)} ; ${fmtNumber(r.upper)}[ : centre=${fmtNumber(r.center)}, effectif=${r.freq}, fréquence=${fmtNumber(r.relative*100,2)}%, cumul=${r.cumulative}`,type:'calc'}));
+  steps.push({text:`Moyenne approchée = Σ(centre×effectif)/N = ${fmtNumber(mean,4)}`,type:'calc'});
+  steps.push({text:`Classe(s) modale(s) : ${modalClasses.join(', ')}`,type:'result',highlight:true});
+  return {n,mean,modalClasses,rows,steps,result:`N=${n}, moyenne≈${fmtNumber(mean,2)}, classe modale : ${modalClasses.join(', ')}`};
+}
+
+export function solveSqrtBounds(n:number,decimals=2): {result:string;steps:Step[]} {
+  assertFiniteNumbers(n,decimals); if(n<0) throw new Error('Le nombre sous la racine doit être positif'); if(!Number.isInteger(decimals)||decimals<0||decimals>6) throw new Error('Ordre d’encadrement invalide');
+  const root=Math.sqrt(n); const factor=10**decimals; const low=Math.floor(root*factor+1e-12)/factor; const exact=Math.abs(root-low)<1e-12; const high=exact?low:low+1/factor;
+  const order=decimals===0?'à l’unité':`à 10^-${decimals}`;
+  const steps:Step[]=[{text:`√${fmtNumber(n)} ≈ ${fmtNumber(root,8)}`,type:'info'}];
+  if(exact){steps.push({text:`√${fmtNumber(n)} = ${fmtNumber(low)} exactement.`,type:'result',highlight:true});return {result:`√${fmtNumber(n)} = ${fmtNumber(low)}`,steps};}
+  steps.push({text:`Encadrement ${order} : ${fmtNumber(low,decimals)} < √${fmtNumber(n)} < ${fmtNumber(high,decimals)}`,type:'result',highlight:true});
+  return {result:`${fmtNumber(low,decimals)} < √${fmtNumber(n)} < ${fmtNumber(high,decimals)}`,steps};
+}
+
+export function solveThalesReciprocal(am:number,ab:number,an:number,ac:number): {result:string;steps:Step[];parallel:boolean} {
+  assertFiniteNumbers(am,ab,an,ac); if(ab===0||ac===0) throw new Error('Les longueurs AB et AC doivent être non nulles'); if([am,ab,an,ac].some(v=>v<=0)) throw new Error('Les longueurs doivent être positives');
+  const r1=am/ab,r2=an/ac,parallel=Math.abs(r1-r2)<1e-9;
+  const steps:Step[]=[{text:`AM/AB = ${fmtNumber(am)}/${fmtNumber(ab)} = ${fmtNumber(r1,6)}`,type:'calc'},{text:`AN/AC = ${fmtNumber(an)}/${fmtNumber(ac)} = ${fmtNumber(r2,6)}`,type:'calc'}];
+  steps.push({text:parallel?'Les rapports sont égaux : si M et N sont placés dans le même ordre sur les côtés, la réciproque de Thalès donne (MN) // (BC).':'Les rapports ne sont pas égaux : on ne peut pas conclure que (MN) // (BC) par la réciproque de Thalès.',type:'result',highlight:true});
+  return {result:parallel?'(MN) // (BC)':'Parallélisme non établi',steps,parallel};
+}
+
+export function solveSimilarTriangles(a1:number,b1:number,c1:number,a2:number,b2:number,c2:number): {result:string;steps:Step[];similar:boolean} {
+  assertFiniteNumbers(a1,b1,c1,a2,b2,c2); if([a1,b1,c1,a2,b2,c2].some(v=>v<=0)) throw new Error('Les côtés doivent être positifs');
+  const r=[a1/a2,b1/b2,c1/c2]; const similar=Math.max(...r)-Math.min(...r)<1e-9;
+  const steps:Step[]=[{text:`Rapports des côtés correspondants : ${fmtNumber(r[0],5)} ; ${fmtNumber(r[1],5)} ; ${fmtNumber(r[2],5)}`,type:'calc'},{text:similar?'Les trois rapports sont égaux : les triangles sont semblables.':'Les rapports ne sont pas tous égaux : ces côtés ne définissent pas deux triangles semblables.',type:'result',highlight:true}];
+  return {result:similar?'Triangles semblables':'Triangles non semblables',steps,similar};
+}
+
+export function solveAxialSymmetryPoint(x:number,y:number,a:number,b:number,c:number): {result:string;steps:Step[]} {
+  assertFiniteNumbers(x,y,a,b,c); const norm=a*a+b*b; if(norm<1e-12) throw new Error('Axe de symétrie invalide');
+  const d=(a*x+b*y+c)/norm; const xp=x-2*a*d, yp=y-2*b*d;
+  const steps:Step[]=[{text:`Axe : ${fmtNumber(a)}x + ${fmtNumber(b)}y + ${fmtNumber(c)} = 0`,type:'info'},{text:`Le segment [MM’] est perpendiculaire à l’axe et son milieu appartient à l’axe.`,type:'info'},{text:`M'(${fmtNumber(xp)} ; ${fmtNumber(yp)})`,type:'result',highlight:true}];
+  return {result:`M'(${fmtNumber(xp)} ; ${fmtNumber(yp)})`,steps};
+}

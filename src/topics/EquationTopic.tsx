@@ -75,7 +75,7 @@ export default function EquationTopic() {
   return (
     <div className="space-y-6">
       <div className="flex gap-2 flex-wrap">
-        {([['linear','1er degré'],['quadratic','2nd degré'],['system','Système 2×2'],['inequation','Inéq. 1 var'],['prodineq','Inéq. produit'],['ineqsys','Inéq. 2 var']] as const).map(([id,label])=>(
+        {([['linear','1er degré'],['quadratic','2nd degré (Bonus)'],['system','Système 2×2'],['inequation','Inéq. 1 var'],['prodineq','Inéq. produit'],['ineqsys','Inéq. 2 var']] as const).map(([id,label])=>(
           <TabButton key={id} active={tab===id} onClick={()=>setTab(id as any)}>{label}</TabButton>
         ))}
       </div>

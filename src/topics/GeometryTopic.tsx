@@ -4,15 +4,17 @@ import SolveButton from '../components/SolveButton';
 import StepDisplay from '../components/StepDisplay';
 import TabButton from '../components/TabButton';
 import TriangleViz from '../components/TriangleViz';
-import { solvePythagoras, solveThales, solveTrig, solvePlaneArea, type Step } from '../utils/mathEngine';
+import { solvePythagoras, solveThales, solveThalesReciprocal, solveSimilarTriangles, solveTrig, solvePlaneArea, type Step } from '../utils/mathEngine';
 import { parseNumberInput, parseOptionalNumber, errorSteps } from '../utils/input';
 
 export default function GeometryTopic() {
-  const [tab, setTab] = useState<'pythagoras'|'thales'|'trig'|'areas'>('pythagoras');
+  const [tab, setTab] = useState<'pythagoras'|'thales'|'thalesrecip'|'similar'|'trig'|'areas'>('pythagoras');
   const [pA, setPA] = useState(''); const [pB, setPB] = useState(''); const [pFind, setPFind] = useState(true);
   const [pSteps, setPSteps] = useState<Step[]>([]); const [pResult, setPResult] = useState('');
   const [pSolved, setPSolved] = useState<{a:number;b:number;c:number}|null>(null);
   const [tA, setTA] = useState(''); const [tB, setTB] = useState(''); const [tC, setTC] = useState('');
+  const [trAM,setTrAM]=useState('3'); const [trAB,setTrAB]=useState('6'); const [trAN,setTrAN]=useState('4'); const [trAC,setTrAC]=useState('8');
+  const [simA1,setSimA1]=useState('3'); const [simB1,setSimB1]=useState('4'); const [simC1,setSimC1]=useState('5'); const [simA2,setSimA2]=useState('6'); const [simB2,setSimB2]=useState('8'); const [simC2,setSimC2]=useState('10');
   const [tSteps, setTSteps] = useState<Step[]>([]); const [tResult, setTResult] = useState('');
   const [trigType, setTrigType] = useState('sin');
   const [trigAngle, setTrigAngle] = useState(''); const [trigOpp, setTrigOpp] = useState(''); const [trigAdj, setTrigAdj] = useState(''); const [trigHyp, setTrigHyp] = useState('');
@@ -46,6 +48,8 @@ export default function GeometryTopic() {
   };
 
   const solveT = () => { try { const r = solveThales(parseNumberInput(tA,'a'),parseNumberInput(tB,'b'),parseNumberInput(tC,'c')); setTSteps(r.steps); setTResult(r.result); } catch(e){setTSteps(errorSteps(e)); setTResult('');} };
+  const solveTR = () => { try { const r=solveThalesReciprocal(parseNumberInput(trAM,'AM'),parseNumberInput(trAB,'AB'),parseNumberInput(trAN,'AN'),parseNumberInput(trAC,'AC')); setTSteps(r.steps); setTResult(r.result); } catch(e){setTSteps(errorSteps(e));setTResult('');} };
+  const solveSim = () => { try { const r=solveSimilarTriangles(parseNumberInput(simA1,'a1'),parseNumberInput(simB1,'b1'),parseNumberInput(simC1,'c1'),parseNumberInput(simA2,'a2'),parseNumberInput(simB2,'b2'),parseNumberInput(simC2,'c2')); setTSteps(r.steps); setTResult(r.result); } catch(e){setTSteps(errorSteps(e));setTResult('');} }; 
 
   const solveTr = () => {
     try {
@@ -83,7 +87,7 @@ export default function GeometryTopic() {
   return (
     <div className="space-y-6">
       <div className="flex gap-2 flex-wrap">
-        {([['pythagoras','Pythagore'],['thales','Thalès'],['trig','Trigonométrie'],['areas','Aires & Périmètres']] as const).map(([id,label])=>(
+        {([['pythagoras','Pythagore'],['thales','Thalès calcul'],['thalesrecip','Réciproque Thalès'],['similar','Triangles semblables'],['trig','Trigonométrie'],['areas','Aires & Périmètres']] as const).map(([id,label])=>(
           <TabButton key={id} active={tab===id} onClick={()=>setTab(id as any)}>{label}</TabButton>
         ))}
       </div>
@@ -128,6 +132,16 @@ export default function GeometryTopic() {
         <StepDisplay steps={tSteps} result={tResult} />
       </>}
 
+      {tab==='thalesrecip'&&<>
+        <p className="text-sm text-[--color-text-secondary]">Vérifier un parallélisme avec la propriété réciproque de Thalès. Les points doivent être placés dans le même ordre sur les côtés du triangle.</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3"><InputField label="AM" value={trAM} onChange={setTrAM}/><InputField label="AB" value={trAB} onChange={setTrAB}/><InputField label="AN" value={trAN} onChange={setTrAN}/><InputField label="AC" value={trAC} onChange={setTrAC}/></div>
+        <SolveButton onClick={solveTR} label="Vérifier le parallélisme"/><StepDisplay steps={tSteps} result={tResult}/>
+      </>}
+      {tab==='similar'&&<>
+        <p className="text-sm text-[--color-text-secondary]">Comparer les trois rapports des côtés correspondants.</p>
+        <div className="grid grid-cols-3 gap-3"><InputField label="a₁" value={simA1} onChange={setSimA1}/><InputField label="b₁" value={simB1} onChange={setSimB1}/><InputField label="c₁" value={simC1} onChange={setSimC1}/><InputField label="a₂" value={simA2} onChange={setSimA2}/><InputField label="b₂" value={simB2} onChange={setSimB2}/><InputField label="c₂" value={simC2} onChange={setSimC2}/></div>
+        <SolveButton onClick={solveSim} label="Comparer les triangles"/><StepDisplay steps={tSteps} result={tResult}/>
+      </>}
       {tab==='trig'&&<>
         <p className="text-sm text-[--color-text-secondary]">sin, cos, tan — remplissez les valeurs connues</p>
         <div className="flex gap-2 justify-center">

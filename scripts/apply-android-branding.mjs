@@ -62,3 +62,12 @@ if (fs.existsSync(gradleFile)) {
 }
 
 console.log('Identité visuelle Android MathBEPC appliquée.');
+
+// Keep Android version aligned with MathBEPC v3.
+const gradleFile = path.join(root, 'android', 'app', 'build.gradle');
+if (fs.existsSync(gradleFile)) {
+  let gradle = fs.readFileSync(gradleFile, 'utf8');
+  gradle = gradle.replace(/versionCode\s+\d+/, 'versionCode 3');
+  gradle = gradle.replace(/versionName\s+["'][^"']+["']/, 'versionName "3.0.0"');
+  fs.writeFileSync(gradleFile, gradle);
+}

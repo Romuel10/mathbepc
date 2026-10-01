@@ -28,6 +28,14 @@ function fmt(text: string): string {
     .replace(/\^(\d+)/g, '<sup>$1</sup>');
 }
 
+
+function stepLabel(type: string | undefined, index: number, total: number, lang: Lang): string {
+  if (type === 'result' || index === total - 1) return lang === 'mg' ? 'Famaranana' : 'Conclusion';
+  if (type === 'info' || index === 0) return lang === 'mg' ? 'Données / Fitsipika' : 'Données / Propriété';
+  if (type === 'warning') return lang === 'mg' ? 'Fampitandremana' : 'Attention';
+  return lang === 'mg' ? 'Kajy' : 'Calcul';
+}
+
 export default function StepDisplay({ steps, result }: StepDisplayProps) {
   const [lang,setLang]=useState<Lang>(()=>getStoredLanguage());
   const [openExplanation,setOpenExplanation]=useState<number|null>(null);
@@ -66,7 +74,8 @@ export default function StepDisplay({ steps, result }: StepDisplayProps) {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className={`font-mono leading-relaxed ${ok ? 'font-semibold' : ''}`}
+                  <span className="inline-flex mb-1 px-2 py-0.5 rounded-full bg-[--color-btn-bg] text-[8px] uppercase tracking-widest font-bold text-[--color-text-muted]">{stepLabel(s.type,i,steps.length,lang)}</span>
+                  <span className={`block font-mono leading-relaxed ${ok ? 'font-semibold' : ''}`}
                     style={{ color: ok ? 'var(--color-ok-text)' : warn ? 'var(--color-warn-text)' : info ? 'var(--color-text-secondary)' : 'var(--color-text)' }}
                     dangerouslySetInnerHTML={{ __html: fmt(s.text) }} />
                   {!warn&&<button onClick={()=>setOpenExplanation(openExplanation===i?null:i)} className="block mt-2 text-[10px] font-bold text-[--color-accent] cursor-pointer">{openExplanation===i?(lang==='mg'?'Akatona':'Masquer'):(lang==='mg'?'Fa maninona?':'Pourquoi ?')}</button>}

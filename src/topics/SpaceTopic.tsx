@@ -3,102 +3,24 @@ import InputField from '../components/InputField';
 import SolveButton from '../components/SolveButton';
 import StepDisplay from '../components/StepDisplay';
 import TabButton from '../components/TabButton';
-import { solveSpaceVolume, solveCompoundSolid, type Step } from '../utils/mathEngine';
+import { solveSpaceVolume, solveCompoundSolid, solveScaleReduction, solveFrustumFromSimilarity, type Step } from '../utils/mathEngine';
 import { parseNumberInput, errorSteps } from '../utils/input';
 
-type Shape = 'cube'|'pave'|'cylindre'|'cone'|'pyramide'|'sphere';
-
-export default function SpaceTopic() {
-  const [tab, setTab] = useState<'simple'|'compound'>('simple');
-  const [shape, setShape] = useState<Shape>('cube');
-  const [params, setParams] = useState<{[k:string]:string}>({});
-  const [steps, setSteps] = useState<Step[]>([]); const [result, setResult] = useState('');
-
-  // Compound
-  const [compParts, setCompParts] = useState<{shape:Shape;params:{[k:string]:string}}[]>([
-    {shape:'cylindre',params:{}}, {shape:'cone',params:{}}
-  ]);
-  const [compSteps, setCompSteps] = useState<Step[]>([]); const [compResult, setCompResult] = useState('');
-
-  const updateParam = (key: string, val: string) => setParams(p => ({...p, [key]: val}));
-  const shapeFields: Record<Shape, string[]> = { cube:['c'], pave:['l','w','h'], cylindre:['r','h'], cone:['r','h'], pyramide:['base','h'], sphere:['r'] };
-  const parseShapeParams = (sh: Shape, source: {[k:string]:string}) => {
-    const out: {[k:string]:number} = {};
-    for (const key of shapeFields[sh]) out[key] = parseNumberInput(source[key]||'', key);
-    return out;
-  };
-  const solve = () => { try { const r = solveSpaceVolume(shape,parseShapeParams(shape,params)); setSteps(r.steps); setResult(r.result); } catch(e){setSteps(errorSteps(e)); setResult('');} };
-
-  const updateCompPart = (idx: number, key: string, val: string) => {
-    setCompParts(p => p.map((part, i) => i === idx ? {...part, params: {...part.params, [key]: val}} : part));
-  };
-  const setCompShape = (idx: number, s: Shape) => {
-    setCompParts(p => p.map((part, i) => i === idx ? {shape: s, params: {}} : part));
-  };
-  const addPart = () => setCompParts(p => [...p, {shape: 'cylindre', params: {}}]);
-  const removePart = (idx: number) => setCompParts(p => p.filter((_, i) => i !== idx));
-
-  const solveComp = () => {
-    try {
-      const parts = compParts.map(p => ({ shape: p.shape, params: parseShapeParams(p.shape, p.params) }));
-      const r = solveCompoundSolid(parts);
-      setCompSteps(r.steps); setCompResult(r.result);
-    } catch(e) { setCompSteps(errorSteps(e)); setCompResult(''); }
-  };
-
-  const shapes: {id:Shape;label:string}[] = [
-    {id:'cube',label:'Cube'},{id:'pave',label:'Pavé'},{id:'cylindre',label:'Cylindre'},
-    {id:'cone',label:'Cône'},{id:'pyramide',label:'Pyramide'},{id:'sphere',label:'Sphère'},
-  ];
-
-  const renderShapeInputs = (sh: Shape, p: {[k:string]:string}, update: (k:string,v:string)=>void) => (
-    <div className="grid grid-cols-2 gap-3">
-      {sh==='cube'&&<InputField label="Arête (c)" value={p.c||''} onChange={v=>update('c',v)} placeholder="5" />}
-      {sh==='pave'&&<><InputField label="L" value={p.l||''} onChange={v=>update('l',v)} placeholder="10" /><InputField label="l" value={p.w||''} onChange={v=>update('w',v)} placeholder="5" /><InputField label="h" value={p.h||''} onChange={v=>update('h',v)} placeholder="4" /></>}
-      {(sh==='cylindre'||sh==='cone')&&<><InputField label="Rayon (r)" value={p.r||''} onChange={v=>update('r',v)} placeholder="3" /><InputField label="Hauteur (h)" value={p.h||''} onChange={v=>update('h',v)} placeholder="7" /></>}
-      {sh==='pyramide'&&<><InputField label="Aire base (B)" value={p.base||''} onChange={v=>update('base',v)} placeholder="25" /><InputField label="Hauteur (h)" value={p.h||''} onChange={v=>update('h',v)} placeholder="6" /></>}
-      {sh==='sphere'&&<InputField label="Rayon (r)" value={p.r||''} onChange={v=>update('r',v)} placeholder="4" />}
-    </div>
-  );
-
-  return (
-    <div className="space-y-6">
-      <div className="flex gap-2">
-        <TabButton active={tab==='simple'} onClick={()=>setTab('simple')}>Solide simple</TabButton>
-        <TabButton active={tab==='compound'} onClick={()=>setTab('compound')}>Solide composé</TabButton>
-      </div>
-
-      {tab==='simple'&&<>
-        <div className="flex gap-2 flex-wrap">
-          {shapes.map(s=>(<TabButton key={s.id} active={shape===s.id} onClick={()=>{setShape(s.id);setParams({});setSteps([]);}}>{s.label}</TabButton>))}
-        </div>
-        {renderShapeInputs(shape, params, updateParam)}
-        <SolveButton onClick={solve} label="Calculer" /><StepDisplay steps={steps} result={result} />
-      </>}
-
-      {tab==='compound'&&<>
-        <p className="text-sm text-[--color-text-secondary]">Calculer le volume total d'un solide composé de plusieurs parties (ex: cylindre surmonté d'un cône).</p>
-        <div className="space-y-4">
-          {compParts.map((part, idx) => (
-            <div key={idx} className="p-4 rounded-lg bg-[--color-inset] border border-[--color-border] space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase text-[--color-text-muted]">Partie {idx+1}</span>
-                {compParts.length > 1 && (
-                  <button onClick={()=>removePart(idx)} className="text-[11px] text-[--color-warn-text] cursor-pointer hover:underline">Supprimer</button>
-                )}
-              </div>
-              <div className="flex gap-1.5 flex-wrap">
-                {shapes.map(s=>(<TabButton key={s.id} active={part.shape===s.id} onClick={()=>setCompShape(idx,s.id)}>{s.label}</TabButton>))}
-              </div>
-              {renderShapeInputs(part.shape, part.params, (k,v)=>updateCompPart(idx,k,v))}
-            </div>
-          ))}
-          <button onClick={addPart} className="w-full py-2.5 rounded-lg border-2 border-dashed border-[--color-border] text-sm text-[--color-text-muted] hover:border-[--color-accent] hover:text-[--color-accent] transition-colors cursor-pointer">
-            + Ajouter une partie
-          </button>
-        </div>
-        <SolveButton onClick={solveComp} label="Calculer le volume total" /><StepDisplay steps={compSteps} result={compResult} />
-      </>}
-    </div>
-  );
+type Shape='cube'|'pave'|'cylindre'|'cone'|'pyramide'|'sphere';
+export default function SpaceTopic(){
+  const [tab,setTab]=useState<'simple'|'compound'|'reduction'|'frustum'>('simple');
+  const [shape,setShape]=useState<Shape>('cone'); const [params,setParams]=useState<Record<string,string>>({r:'3',h:'7'}); const [steps,setSteps]=useState<Step[]>([]),[result,setResult]=useState('');
+  const [parts,setParts]=useState<{shape:Shape;params:Record<string,string>}[]>([{shape:'cylindre',params:{r:'3',h:'5'}},{shape:'cone',params:{r:'3',h:'4'}}]);
+  const [k,setK]=useState('0,5'),[value,setValue]=useState('100'),[kind,setKind]=useState<'length'|'area'|'volume'>('volume'); const [fullVolume,setFullVolume]=useState('300');
+  const fields:Record<Shape,string[]>={cube:['c'],pave:['l','w','h'],cylindre:['r','h'],cone:['r','h'],pyramide:['base','h'],sphere:['r']};
+  const n=(v:string,l:string)=>parseNumberInput(v,l); const parseParams=(sh:Shape,p:Record<string,string>)=>Object.fromEntries(fields[sh].map(key=>[key,n(p[key]||'',key)]));
+  const show=(fn:()=>{steps:Step[];result:string})=>{try{const r=fn();setSteps(r.steps);setResult(r.result);}catch(e){setSteps(errorSteps(e));setResult('');}};
+  const shapes:{id:Shape;label:string}[]=[{id:'cube',label:'Cube'},{id:'pave',label:'Pavé'},{id:'cylindre',label:'Cylindre'},{id:'cone',label:'Cône'},{id:'pyramide',label:'Pyramide'},{id:'sphere',label:'Sphère'}];
+  const inputs=(sh:Shape,p:Record<string,string>,update:(k:string,v:string)=>void)=><div className="grid grid-cols-2 gap-3">{sh==='cube'&&<InputField label="Arête c" value={p.c||''} onChange={v=>update('c',v)}/>} {sh==='pave'&&<><InputField label="L" value={p.l||''} onChange={v=>update('l',v)}/><InputField label="l" value={p.w||''} onChange={v=>update('w',v)}/><InputField label="h" value={p.h||''} onChange={v=>update('h',v)}/></>} {(sh==='cylindre'||sh==='cone')&&<><InputField label="Rayon r" value={p.r||''} onChange={v=>update('r',v)}/><InputField label="Hauteur h" value={p.h||''} onChange={v=>update('h',v)}/></>} {sh==='pyramide'&&<><InputField label="Aire de base B" value={p.base||''} onChange={v=>update('base',v)}/><InputField label="Hauteur h" value={p.h||''} onChange={v=>update('h',v)}/></>} {sh==='sphere'&&<InputField label="Rayon r" value={p.r||''} onChange={v=>update('r',v)}/>}</div>;
+  return <div className="space-y-6"><div className="flex gap-2 flex-wrap"><TabButton active={tab==='simple'} onClick={()=>setTab('simple')}>Solide simple</TabButton><TabButton active={tab==='compound'} onClick={()=>setTab('compound')}>Solide composé</TabButton><TabButton active={tab==='reduction'} onClick={()=>setTab('reduction')}>Section & réduction</TabButton><TabButton active={tab==='frustum'} onClick={()=>setTab('frustum')}>Tronc</TabButton></div>
+  {tab==='simple'&&<><div className="flex gap-2 flex-wrap">{shapes.map(s=><TabButton key={s.id} active={shape===s.id} onClick={()=>{setShape(s.id);setParams({});setSteps([])}}>{s.label}</TabButton>)}</div>{inputs(shape,params,(key,v)=>setParams(p=>({...p,[key]:v})))}<SolveButton onClick={()=>show(()=>solveSpaceVolume(shape,parseParams(shape,params)))} label="Calculer"/><StepDisplay steps={steps} result={result}/></>}
+  {tab==='compound'&&<><p className="text-sm text-[--color-text-secondary]">Additionne les volumes de plusieurs solides simples.</p>{parts.map((part,i)=><div key={i} className="p-4 rounded-xl bg-[--color-inset] border border-[--color-border] space-y-3"><div className="flex justify-between"><span className="text-xs font-bold">Partie {i+1}</span>{parts.length>1&&<button onClick={()=>setParts(p=>p.filter((_,j)=>j!==i))} className="text-xs text-[--color-warn-text] cursor-pointer">Supprimer</button>}</div><div className="flex gap-1 flex-wrap">{shapes.map(s=><TabButton key={s.id} active={part.shape===s.id} onClick={()=>setParts(p=>p.map((x,j)=>j===i?{shape:s.id,params:{}}:x))}>{s.label}</TabButton>)}</div>{inputs(part.shape,part.params,(key,v)=>setParts(p=>p.map((x,j)=>j===i?{...x,params:{...x.params,[key]:v}}:x)))}</div>)}<button onClick={()=>setParts(p=>[...p,{shape:'cone',params:{}}])} className="w-full py-2.5 rounded-xl border-2 border-dashed border-[--color-border] text-xs font-bold cursor-pointer">+ Ajouter une partie</button><SolveButton onClick={()=>show(()=>solveCompoundSolid(parts.map(p=>({shape:p.shape,params:parseParams(p.shape,p.params)}))))} label="Calculer le volume total"/><StepDisplay steps={steps} result={result}/></>}
+  {tab==='reduction'&&<><div className="rounded-xl bg-[--color-accent-subtle] p-3 text-xs text-[--color-text-secondary]"><strong>Programme 3e :</strong> si les longueurs sont multipliées par k, les aires sont multipliées par k² et les volumes par k³.</div><div className="grid grid-cols-3 gap-2">{(['length','area','volume'] as const).map(v=><TabButton key={v} active={kind===v} onClick={()=>setKind(v)}>{v==='length'?'Longueur':v==='area'?'Aire':'Volume'}</TabButton>)}</div><div className="grid grid-cols-2 gap-3"><InputField label="Rapport k" value={k} onChange={setK}/><InputField label="Grandeur initiale" value={value} onChange={setValue}/></div><SolveButton onClick={()=>show(()=>solveScaleReduction(n(k,'k'),n(value,'grandeur'),kind))} label="Calculer la nouvelle grandeur"/><StepDisplay steps={steps} result={result}/></>}
+  {tab==='frustum'&&<><p className="text-sm text-[--color-text-secondary]">Pour un cône ou une pyramide coupé(e) par un plan parallèle à la base : Vtronc = Vgrand − Vpetit et Vpetit = k³Vgrand.</p><div className="grid grid-cols-2 gap-3"><InputField label="Volume du solide complet" value={fullVolume} onChange={setFullVolume}/><InputField label="Rapport k de la petite partie" value={k} onChange={setK}/></div><SolveButton onClick={()=>show(()=>solveFrustumFromSimilarity(n(fullVolume,'volume'),n(k,'k')))} label="Calculer le volume du tronc"/><StepDisplay steps={steps} result={result}/></>}
+  </div>;
 }
