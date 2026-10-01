@@ -5,7 +5,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main, v2-learning, v3-programme-bepc]
+    branches: [main]
     paths:
       - 'src/**'
       - 'public/**'
@@ -50,6 +50,14 @@ jobs:
       - name: Installer les dépendances web
         run: npm ci
 
+      - name: Lire la version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "APP_VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Auditer toutes les dépendances
+        run: npm run audit:deps
+
       - name: Vérifier MathBEPC
         run: npm run check
 
@@ -74,12 +82,12 @@ jobs:
       - name: Préparer l'APK
         run: |
           mkdir -p artifact
-          cp android/app/build/outputs/apk/debug/app-debug.apk artifact/MathBEPC-Madagascar.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk "artifact/MathBEPC-v${APP_VERSION}-debug.apk"
 
       - name: Publier l'APK comme artefact
         uses: actions/upload-artifact@v4
         with:
-          name: MathBEPC-Madagascar-APK
-          path: artifact/MathBEPC-Madagascar.apk
+          name: MathBEPC-v${{ env.APP_VERSION }}-Android-debug
+          path: "artifact/MathBEPC-v${{ env.APP_VERSION }}-debug.apk"
           if-no-files-found: error
           retention-days: 30

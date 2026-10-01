@@ -4,7 +4,7 @@ const annales=[
   {year:2018,url:'https://www.lechaya.com/madagascar/subjects/madagascar-bepc-general-math-2018',corrected:true},
   {year:2017,url:'https://www.lechaya.com/madagascar/subjects/madagascar-bepc-general-math-2017',corrected:true},
   {year:2016,url:'https://www.lechaya.com/madagascar/subjects/madagascar-bepc-general-math-2016',corrected:true},
-  {year:2015,url:'https://www.lechaya.com/madagascar/subjects/madagascar-bepc-general-math-2015',corrected:false},
+  {year:2015,url:'https://www.lechaya.com/madagascar/subjects/madagascar-bepc-general-math-2015',corrected:true},
   {year:2014,url:'https://www.lechaya.com/madagascar/subjects/madagascar-bepc-general-math-2014',corrected:true},
   {year:2013,url:'https://www.lechaya.com/madagascar/subjects/madagascar-bepc-general-math-2013',corrected:true},
   {year:2012,url:'https://www.lechaya.com/madagascar/subjects/madagascar-bepc-general-math-2012',corrected:true},

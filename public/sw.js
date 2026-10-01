@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mathbepc-v5';
+const CACHE_NAME = 'mathbepc-v1.0.0';
 const APP_SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', event => {
@@ -15,9 +15,10 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
-  const url = new URL(event.request.url);
 
-  // Navigation: prefer the newest application, then fall back to the cached shell.
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
+
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -33,24 +34,10 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Same-origin static files: cache after a successful network response.
-  if (url.origin === self.location.origin) {
-    event.respondWith(
-      caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
-        if (response.ok) caches.open(CACHE_NAME).then(cache => cache.put(event.request, response.clone()));
-        return response;
-      }))
-    );
-    return;
-  }
-
-  // External resources (fonts): network first, cached fallback.
   event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        if (response.ok) caches.open(CACHE_NAME).then(cache => cache.put(event.request, response.clone()));
-        return response;
-      })
-      .catch(() => caches.match(event.request))
+    caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
+      if (response.ok) caches.open(CACHE_NAME).then(cache => cache.put(event.request, response.clone()));
+      return response;
+    }))
   );
 });
