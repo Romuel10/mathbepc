@@ -7,7 +7,7 @@ interface Props{lang:Lang;onOpenChapter:(id:string)=>void;}
 interface ParsedQuestion{raw:string;analysis:SmartAnalysis|null;}
 
 function unescapePdfString(value:string):string{
-  return value.replace(/\\([nrtbf()\\])/g,(_,c)=>({n:'\n',r:'\r',t:'\t',b:'',f:'','(':'(',')':')','\\':'\\'}[c]??c)).replace(/\\([0-7]{1,3})/g,(_,o)=>String.fromCharCode(parseInt(o,8)));
+  return value.replace(/\\([nrtbf()\\])/g,(_,c)=>(({n:'\n',r:'\r',t:'\t',b:'',f:'','(':'(',')':')','\\':'\\'} as Record<string,string>)[c]??c)).replace(/\\([0-7]{1,3})/g,(_,o)=>String.fromCharCode(parseInt(o,8)));
 }
 function extractPdfTextOperators(source:string):string[]{
   const out:string[]=[];
