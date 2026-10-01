@@ -1,0 +1,11 @@
+{
+  "appId": "mg.mathbepc.app",
+  "appName": "MathBEPC Madagascar",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

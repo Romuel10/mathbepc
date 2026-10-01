@@ -123,8 +123,14 @@ export default function App() {
       <header className="sticky top-0 z-50 border-b border-[--color-border]/80 bg-[--color-surface]/90 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           <button onClick={goHome} className="flex items-center gap-3 cursor-pointer" aria-label="Accueil MathBEPC">
-            <div className="w-9 h-9 rounded-xl bg-[--color-accent] flex items-center justify-center shadow-[0_0_14px_var(--color-accent-glow)]">
-              <span className="text-white text-sm font-extrabold font-mono">M</span>
+            <div className="w-9 h-9 rounded-xl bg-[#145c48] flex items-center justify-center shadow-[0_0_14px_rgba(20,92,72,.25)]" aria-hidden="true">
+              <svg viewBox="0 0 36 36" className="w-7 h-7">
+                <path d="M6 17.5c4.2.3 7.3 1.2 10.2 3.1v9C13.4 27.9 10 27 6 26.7V17.5Z" fill="white"/>
+                <path d="M30 17.5c-4.2.3-7.3 1.2-10.2 3.1v9C22.6 27.9 26 27 30 26.7V17.5Z" fill="white"/>
+                <path d="M18 20.5v9" stroke="#dbe9e3" strokeWidth="1.2"/>
+                <text x="18" y="15" textAnchor="middle" fontSize="12" fontWeight="800" fill="#ffcd4a">π</text>
+                <path d="M29 5.5l2 2.2-1.1 2.5 1.5 2.2-1.5 3-1.2-2.4.8-2.6-1.2-2.1.7-2.8Z" fill="#da3434"/>
+              </svg>
             </div>
             <div className="text-left">
               <div className="text-sm font-extrabold tracking-tight">MathBEPC</div>

@@ -1,14 +1,17 @@
 {
-  "name": "MathBEPC — Résolution Maths 3ème",
+  "name": "MathBEPC Madagascar — Maths 3e",
   "short_name": "MathBEPC",
   "description": "Résolution de mathématiques classe de 3ème pour le BEPC de Madagascar. Tous les chapitres avec résolution étape par étape.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0f1117",
-  "theme_color": "#7b93ff",
+  "background_color": "#F7F9FC",
+  "theme_color": "#145C48",
   "orientation": "any",
-  "categories": ["education", "utilities"],
+  "categories": [
+    "education",
+    "utilities"
+  ],
   "lang": "fr",
   "icons": [
     {
