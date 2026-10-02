@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import type { Lang } from '../utils/i18n';
 import { loadProgress, resetProgress, type ProgressData } from '../utils/progress';
+import PageHeader from './PageHeader';
 
-const names:Record<string,string>={fractions:'Fractions',radicals:'Racines carrées',powers:'Puissances',absolute:'Valeur absolue',development:'Développement',factorization:'Factorisation',equations:'Équations',vectors:'Vecteurs',geometry:'Géométrie plane',space:'Espace',stats:'Statistiques'};
+const names:Record<string,string>={fractions:'Fractions',radicals:'Racines carrées',powers:'Puissances',absolute:'Valeur absolue',development:'Développement',factorization:'Factorisation',equations:'Équations',functions:'Applications affines',vectors:'Vecteurs',geometry:'Géométrie plane',circle:'Angles inscrits',space:'Espace',stats:'Statistiques'};
+
 export default function ProgressDashboard({lang}:{lang:Lang}){
   const [data,setData]=useState<ProgressData>(()=>loadProgress());
   const mg=lang==='mg';
@@ -10,5 +12,34 @@ export default function ProgressDashboard({lang}:{lang:Lang}){
   const accuracy=data.attempts?Math.round(data.correct/data.attempts*100):0;
   const reset=()=>{if(window.confirm(mg?'Hofafana ve ny fandrosoana rehetra?':'Effacer tout l’historique de progression ?')){resetProgress();setData(loadProgress());}};
   const rows=Object.entries(data.byChapter).sort((a,b)=>b[1].attempts-a[1].attempts);
-  return <div className="max-w-4xl mx-auto animate-fade-up"><h1 className="text-2xl sm:text-4xl font-extrabold">{mg?'Fandrosoako':'Mes progrès'}</h1><p className="mt-2 text-sm text-[--color-text-secondary]">{mg?'Voatahiry ao amin’ity finday ity ihany ireo données ireo.':'Ces données restent uniquement sur cet appareil, sans compte obligatoire.'}</p><div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6">{[[mg?'Fanazarana':'Exercices',data.attempts],[mg?'Fahombiazana':'Réussite',`${accuracy}%`],[mg?'Fanadinana':'Examens',data.examsCompleted],[mg?'Andro misesy':'Jours de suite',data.streakDays]].map(([l,v])=><div key={String(l)} className="rounded-2xl border border-[--color-border] bg-[--color-card] p-4 text-center"><p className="text-2xl font-extrabold text-[--color-accent]">{v}</p><p className="text-[10px] uppercase tracking-widest text-[--color-text-muted] mt-1">{l}</p></div>)}</div><div className="mt-5 rounded-2xl border border-[--color-border] bg-[--color-card] p-5"><div className="flex justify-between items-center"><div><p className="font-bold">{mg?'Valiny tsara indrindra amin’ny examen':'Meilleur examen'}</p><p className="text-xs text-[--color-text-secondary]">{mg?'Naoty ambony indrindra voatahiry':'Meilleur pourcentage enregistré'}</p></div><p className="text-3xl font-extrabold text-[--color-ok-text]">{data.bestExamPercent}%</p></div></div><div className="mt-5 rounded-2xl border border-[--color-border] bg-[--color-card] p-5"><p className="font-bold mb-4">{mg?'Isaky ny toko':'Par chapitre'}</p>{rows.length===0?<p className="text-sm text-[--color-text-muted]">{mg?'Mbola tsy misy fanazarana vita.':'Aucun exercice enregistré pour le moment.'}</p>:<div className="space-y-4">{rows.map(([id,p])=>{const pct=p.attempts?Math.round(p.correct/p.attempts*100):0;return <div key={id}><div className="flex justify-between text-xs mb-1"><span className="font-semibold">{names[id]||id}</span><span className="text-[--color-text-muted]">{p.correct}/{p.attempts} • {pct}%</span></div><div className="h-2 rounded-full bg-[--color-inset] overflow-hidden"><div className="h-full bg-[--color-accent] rounded-full" style={{width:`${pct}%`}} /></div></div>})}</div>}</div><button onClick={reset} className="mt-5 px-4 py-2.5 rounded-xl bg-[--color-warn-bg] text-[--color-warn-text] text-xs font-bold cursor-pointer">{mg?'Hamafa fandrosoana':'Réinitialiser mes progrès'}</button></div>;
+
+  return <div className="page-medium animate-fade-up">
+    <PageHeader title={mg?'Fandrosoako':'Mes progrès'} description={mg?'Voatahiry ao amin’ity appareil ity ihany.':'Tes résultats sont enregistrés uniquement sur cet appareil.'}/>
+
+    <div className="metrics-grid">
+      {[
+        [mg?'Fanazarana':'Exercices',data.attempts],
+        [mg?'Fahombiazana':'Réussite',`${accuracy}%`],
+        [mg?'Fanadinana':'Examens',data.examsCompleted],
+        [mg?'Andro misesy':'Jours de suite',data.streakDays],
+      ].map(([label,value])=><div key={String(label)} className="metric-card"><strong>{value}</strong><span>{label}</span></div>)}
+    </div>
+
+    <section className="progress-highlight">
+      <div><h2>{mg?'Examen tsara indrindra':'Meilleur examen'}</h2><p>{mg?'Naoty ambony indrindra voatahiry':'Meilleur résultat enregistré'}</p></div>
+      <strong>{data.bestExamPercent}%</strong>
+    </section>
+
+    <section className="progress-section">
+      <h2>{mg?'Isaky ny toko':'Par chapitre'}</h2>
+      {rows.length===0?<p className="empty-state">{mg?'Mbola tsy misy fanazarana vita.':'Aucun exercice enregistré pour le moment.'}</p>:<div className="chapter-progress-list">
+        {rows.map(([id,p])=>{const pct=p.attempts?Math.round(p.correct/p.attempts*100):0;return <div key={id} className="chapter-progress-row">
+          <div className="chapter-progress-top"><span>{names[id]||id}</span><small>{p.correct}/{p.attempts} • {pct}%</small></div>
+          <div className="progress-track"><span style={{width:`${pct}%`}}/></div>
+        </div>;})}
+      </div>}
+    </section>
+
+    <button type="button" onClick={reset} className="danger-text-button">{mg?'Hamafa ny fandrosoana':'Réinitialiser mes progrès'}</button>
+  </div>;
 }
