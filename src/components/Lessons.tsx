@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Lang } from '../utils/i18n';
+import PageHeader from './PageHeader';
 
 interface Lesson {
   id:string; title:string; mgTitle:string; formula:string[];
@@ -25,19 +26,18 @@ const lessons:Lesson[]=[
 export default function Lessons({lang,onOpenChapter}:{lang:Lang;onOpenChapter:(id:string)=>void}){
   const [search,setSearch]=useState('');
   const [open,setOpen]=useState<string|null>(null);
-  const filtered=useMemo(()=>lessons.filter(l=>`${l.title} ${l.mgTitle} ${l.summary.fr} ${l.summary.mg}`.toLowerCase().includes(search.toLowerCase())),[search]);
+  const filtered=useMemo(()=>lessons.filter(l=>[l.title,l.mgTitle,l.summary.fr,l.summary.mg].join(' ').toLowerCase().includes(search.toLowerCase())),[search]);
   const mg=lang==='mg';
-  return <div className="max-w-4xl mx-auto animate-fade-up">
-    <h1 className="text-2xl sm:text-4xl font-extrabold">{mg?'Famintinana lesona':'Fiches de révision'}</h1>
-    <p className="mt-2 text-sm text-[--color-text-secondary]">{mg?'Formule, fomba fanao ary fahadisoana tokony hialana.':'Formules essentielles, méthode et erreurs fréquentes à retenir pour le BEPC.'}</p>
-    <input value={search} onChange={e=>setSearch(e.target.value)} placeholder={mg?'Mitady lesona…':'Rechercher une notion…'} className="mt-5 w-full px-4 py-3 rounded-xl border border-[--color-input-border] bg-[--color-input-bg] focus:outline-none focus:ring-2 focus:ring-[--color-input-focus]" />
-    <div className="space-y-3 mt-5">{filtered.map(l=><div key={l.id} className="rounded-2xl border border-[--color-border] bg-[--color-card] overflow-hidden">
-      <button onClick={()=>setOpen(open===l.id?null:l.id)} className="w-full p-4 text-left flex justify-between gap-3 cursor-pointer"><div><p className="font-bold">{mg?l.mgTitle:l.title}</p><p className="text-xs text-[--color-text-secondary] mt-1">{l.summary[lang]}</p></div><span className="text-[--color-accent] font-bold">{open===l.id?'−':'+'}</span></button>
-      {open===l.id&&<div className="border-t border-[--color-border] p-4 grid md:grid-cols-3 gap-4">
-        <div><p className="text-[10px] font-bold uppercase tracking-widest text-[--color-text-muted] mb-2">Formules</p>{l.formula.map(f=><div key={f} className="font-mono text-xs bg-[--color-inset] rounded-lg p-2 mb-2">{f}</div>)}</div>
-        <div><p className="text-[10px] font-bold uppercase tracking-widest text-[--color-text-muted] mb-2">{mg?'Fomba fanao':'Méthode'}</p><ol className="space-y-2">{l.method[lang].map((m,i)=><li key={m} className="text-xs flex gap-2"><span className="w-5 h-5 rounded-full bg-[--color-accent-subtle] text-[--color-accent] flex items-center justify-center flex-shrink-0 font-bold">{i+1}</span><span>{m}</span></li>)}</ol></div>
-        <div><p className="text-[10px] font-bold uppercase tracking-widest text-[--color-text-muted] mb-2">{mg?'Fahadisoana ialana':'Erreurs à éviter'}</p><ul className="space-y-2">{l.mistakes[lang].map(m=><li key={m} className="text-xs text-[--color-warn-text]">• {m}</li>)}</ul><button onClick={()=>onOpenChapter(l.id)} className="mt-4 w-full py-2.5 rounded-xl bg-[--color-btn-bg] text-xs font-bold cursor-pointer">{mg?'Hanao kajy amin’ity toko ity':'Ouvrir le calculateur'}</button></div>
+  return <div className="page-medium animate-fade-up">
+    <PageHeader title={mg?'Famintinana lesona':'Réviser les cours'} description={mg?'Formule ilaina, fomba fanao ary fahadisoana tokony hialana.':'Les formules essentielles, les méthodes et les erreurs à éviter pour le BEPC.'}/>
+    <label className="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input value={search} onChange={e=>setSearch(e.target.value)} placeholder={mg?'Mitady lesona…':'Rechercher une notion…'}/></label>
+    <div className="lesson-list">{filtered.map(l=><article key={l.id} className={'lesson-card '+(open===l.id?'is-open':'')}>
+      <button type="button" onClick={()=>setOpen(open===l.id?null:l.id)} className="lesson-card-head"><div className="min-w-0"><h2>{mg?l.mgTitle:l.title}</h2><p>{l.summary[lang]}</p></div><span className="lesson-toggle">{open===l.id?'−':'+'}</span></button>
+      {open===l.id&&<div className="lesson-details">
+        <section><h3>Formules</h3><div className="formula-list">{l.formula.map(f=><div key={f} className="formula-card">{f}</div>)}</div></section>
+        <section><h3>{mg?'Fomba fanao':'Méthode'}</h3><ol className="method-list">{l.method[lang].map((m,i)=><li key={m}><span>{i+1}</span><p>{m}</p></li>)}</ol></section>
+        <section><h3>{mg?'Fahadisoana ialana':'Erreurs à éviter'}</h3><ul className="mistake-list">{l.mistakes[lang].map(m=><li key={m}>{m}</li>)}</ul><button type="button" onClick={()=>onOpenChapter(l.id)} className="secondary-button w-full">{mg?'Hanao kajy':'Ouvrir les exercices'}</button></section>
       </div>}
-    </div>)}</div>
+    </article>)}</div>
   </div>;
 }
