@@ -1272,3 +1272,16 @@ input[type="number"] { -moz-appearance: textfield; }
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+
+/* Keep the back action explicit for students on mobile. */
+@media (max-width: 640px) {
+  .back-button span {
+    display: inline;
+  }
+}
+@media (max-width: 390px) {
+  .page-location {
+    display: none;
+  }
+}

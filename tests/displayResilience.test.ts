@@ -29,3 +29,9 @@ test('long math and scrollable data cannot force viewport overflow',()=>{
 test('very narrow phones switch two-column calculator grids to one column',()=>{
   assert.match(css,/@media \(max-width: 390px\)[\s\S]*\.topic-workspace \.grid-cols-2[\s\S]*grid-template-columns:\s*minmax\(0, 1fr\)/);
 });
+
+
+test('mobile back button keeps its text label visible',()=>{
+  assert.match(css,/Keep the back action explicit[\s\S]*\.back-button span[\s\S]*display:\s*inline/);
+  assert.match(css,/@media \(max-width: 390px\)[\s\S]*\.page-location[\s\S]*display:\s*none/);
+});
