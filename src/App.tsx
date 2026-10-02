@@ -25,50 +25,92 @@ import { loadProgress, recordVisit } from './utils/progress';
 import {
   FractionIcon, RadicalIcon, AbsoluteIcon, ExpandIcon, CompressIcon,
   EqualsIcon, TriangleIcon, ChartIcon, PowerIcon, ArrowLeftIcon,
-  ArrowRightIcon, MenuIcon, CloseIcon, VectorIcon, BoxIcon,
-  SunIcon, MoonIcon,
+  ArrowRightIcon, MenuIcon, CloseIcon, VectorIcon, BoxIcon, SunIcon, MoonIcon,
 } from './components/Icons';
 
-type Group = 'Calculs & nombres' | 'Algèbre' | 'Géométrie' | 'Données';
-type View = 'home'|'smart'|'subject'|'practice'|'lessons'|'exam'|'progress'|'annales'|'programme'|'chapters'|'chapter';
-interface Chapter { id:string; title:string; mgTitle:string; icon:ComponentType<{className?:string}>; description:string; mgDescription:string; keywords:string; group:Group; component:ComponentType; }
-interface NavState { mathbepc:true; view:View; selected:string|null; }
+type Group='Calculs & nombres'|'Algèbre'|'Géométrie'|'Données';
+type View='home'|'smart'|'subject'|'practice'|'lessons'|'exam'|'progress'|'annales'|'programme'|'chapters'|'chapter';
+interface Chapter{id:string;title:string;mgTitle:string;icon:ComponentType<{className?:string}>;description:string;mgDescription:string;keywords:string;group:Group;component:ComponentType;}
+interface NavState{mathbepc:true;view:View;selected:string|null;}
 
 const chapters:Chapter[]=[
-  {id:'fractions',title:'Fractions & rationnels',mgTitle:'Fraction & rationnel',icon:FractionIcon,description:'Fractions, expressions, PGCD/PPCM, rationalisation',mgDescription:'Fraction, expression, PGCD/PPCM ary rationalisation',keywords:'fraction rationnel pgcd ppcm simplifier',group:'Calculs & nombres',component:FractionTopic},
-  {id:'radicals',title:'Racines carrées',mgTitle:'Racine carrée',icon:RadicalIcon,description:'Simplifier, calculer et comparer des radicaux',mgDescription:'Mampihena, mikajy ary mampitaha racine',keywords:'racine radical sqrt',group:'Calculs & nombres',component:RadicalTopic},
-  {id:'powers',title:'Puissances',mgTitle:'Puissance',icon:PowerIcon,description:'Calculs et règles sur les puissances',mgDescription:'Kajy sy fitsipiky ny puissance',keywords:'puissance exposant',group:'Calculs & nombres',component:PowersTopic},
-  {id:'absolute',title:'Valeur absolue',mgTitle:'Valeur absolue',icon:AbsoluteIcon,description:'Distance, équations et inéquations',mgDescription:'Distance, équation ary inéquation',keywords:'valeur absolue distance',group:'Algèbre',component:AbsoluteValueTopic},
-  {id:'development',title:'Développement',mgTitle:'Développement',icon:ExpandIcon,description:'Identités remarquables et double distribution',mgDescription:'Identité remarquable sy distributivité',keywords:'développer identité remarquable distribution',group:'Algèbre',component:DevelopmentTopic},
-  {id:'factorization',title:'Factorisation',mgTitle:'Factorisation',icon:CompressIcon,description:'Facteur commun, groupement et trinômes',mgDescription:'Facteur commun, groupement ary trinôme',keywords:'factoriser facteur commun groupement',group:'Algèbre',component:FactorizationTopic},
-  {id:'equations',title:'Équations & inéquations',mgTitle:'Équation & inéquation',icon:EqualsIcon,description:'1er degré, systèmes, tableaux de signes et problèmes',mgDescription:'Degré 1, système, tableau de signes ary problème',keywords:'équation inequation système cramer premier degré problème',group:'Algèbre',component:EquationTopic},
-  {id:'functions',title:'Applications affines & linéaires',mgTitle:'Application affine & linéaire',icon:ChartIcon,description:'Image, antécédent, variation, coefficient directeur et graphique',mgDescription:'Image, antécédent, variation, coefficient directeur ary graphique',keywords:'fonction application affine lineaire image antécédent coefficient directeur graphique',group:'Algèbre',component:FunctionsTopic},
-  {id:'vectors',title:'Vecteurs & coordonnées',mgTitle:'Vecteur & coordonnée',icon:VectorIcon,description:'Opérations, colinéarité, orthogonalité, droites et transformations',mgDescription:'Opération, colinéarité, orthogonalité, droite ary transformation',keywords:'vecteur coordonnées milieu norme colinéaire orthogonal droite translation symétrie homothétie',group:'Géométrie',component:VectorTopic},
-  {id:'geometry',title:'Géométrie plane',mgTitle:'Géométrie plane',icon:TriangleIcon,description:'Pythagore, Thalès, trigonométrie, aires',mgDescription:'Pythagore, Thalès, trigonométrie ary aire',keywords:'pythagore thales trigonométrie aire périmètre',group:'Géométrie',component:GeometryTopic},
-  {id:'circle',title:'Angles inscrits & cercle',mgTitle:'Angle inscrit & cercle',icon:TriangleIcon,description:'Angle au centre, angle inscrit, même arc et droite-cercle',mgDescription:'Angle au centre, angle inscrit, arc mitovy ary droite-cercle',keywords:'cercle angle inscrit centre arc demi cercle tangente sécante',group:'Géométrie',component:CircleTopic},
-  {id:'space',title:'Géométrie dans l’espace',mgTitle:'Géométrie dans l’espace',icon:BoxIcon,description:'Cônes, pyramides, sections, réduction, troncs et volumes',mgDescription:'Cône, pyramide, section, réduction, tronc ary volume',keywords:'volume cube cylindre cone sphere pyramide section réduction tronc',group:'Géométrie',component:SpaceTopic},
-  {id:'stats',title:'Statistiques & proportionnalité',mgTitle:'Statistique & proportionnalité',icon:ChartIcon,description:'Classes, histogrammes, cumuls, moyenne, proportionnalité et pourcentages',mgDescription:'Classes, histogramme, cumul, moyenne, proportionnalité ary pourcentage',keywords:'statistique classes histogramme fréquence cumul moyenne classe modale proportion pourcentage',group:'Données',component:StatsTopic},
+{id:'fractions',title:'Fractions & rationnels',mgTitle:'Fraction & rationnel',icon:FractionIcon,description:'Fractions, PGCD/PPCM et calculs rationnels',mgDescription:'Fraction, PGCD/PPCM ary kajy rationnel',keywords:'fraction rationnel pgcd ppcm simplifier',group:'Calculs & nombres',component:FractionTopic},
+{id:'radicals',title:'Racines carrées',mgTitle:'Racine carrée',icon:RadicalIcon,description:'Simplifier et calculer des radicaux',mgDescription:'Mampihena sy mikajy racine',keywords:'racine radical sqrt',group:'Calculs & nombres',component:RadicalTopic},
+{id:'powers',title:'Puissances',mgTitle:'Puissance',icon:PowerIcon,description:'Règles et calculs sur les puissances',mgDescription:'Fitsipika sy kajy puissance',keywords:'puissance exposant',group:'Calculs & nombres',component:PowersTopic},
+{id:'absolute',title:'Valeur absolue',mgTitle:'Valeur absolue',icon:AbsoluteIcon,description:'Distance, équations et inéquations',mgDescription:'Distance, équation ary inéquation',keywords:'valeur absolue distance',group:'Algèbre',component:AbsoluteValueTopic},
+{id:'development',title:'Développement',mgTitle:'Développement',icon:ExpandIcon,description:'Distributivité et identités remarquables',mgDescription:'Distributivité sy identité remarquable',keywords:'développer identité remarquable distribution',group:'Algèbre',component:DevelopmentTopic},
+{id:'factorization',title:'Factorisation',mgTitle:'Factorisation',icon:CompressIcon,description:'Facteur commun, groupement et identités',mgDescription:'Facteur commun, groupement ary identité',keywords:'factoriser facteur commun groupement',group:'Algèbre',component:FactorizationTopic},
+{id:'equations',title:'Équations & inéquations',mgTitle:'Équation & inéquation',icon:EqualsIcon,description:'1er degré, systèmes et tableaux de signes',mgDescription:'Degré 1, système ary tableau de signes',keywords:'équation inequation système cramer premier degré problème',group:'Algèbre',component:EquationTopic},
+{id:'functions',title:'Applications affines',mgTitle:'Application affine',icon:ChartIcon,description:'Images, antécédents, variation et graphique',mgDescription:'Image, antécédent, variation ary graphique',keywords:'fonction application affine lineaire image antécédent coefficient directeur graphique',group:'Algèbre',component:FunctionsTopic},
+{id:'vectors',title:'Vecteurs & coordonnées',mgTitle:'Vecteur & coordonnée',icon:VectorIcon,description:'Vecteurs, droites et transformations',mgDescription:'Vecteur, droite ary transformation',keywords:'vecteur coordonnées milieu norme colinéaire orthogonal droite translation symétrie homothétie',group:'Géométrie',component:VectorTopic},
+{id:'geometry',title:'Géométrie plane',mgTitle:'Géométrie plane',icon:TriangleIcon,description:'Pythagore, Thalès et trigonométrie',mgDescription:'Pythagore, Thalès ary trigonométrie',keywords:'pythagore thales trigonométrie aire périmètre',group:'Géométrie',component:GeometryTopic},
+{id:'circle',title:'Angles & cercle',mgTitle:'Angle & cercle',icon:TriangleIcon,description:'Angles inscrits, arcs et demi-cercle',mgDescription:'Angle inscrit, arc ary demi-cercle',keywords:'cercle angle inscrit centre arc demi cercle tangente sécante',group:'Géométrie',component:CircleTopic},
+{id:'space',title:'Géométrie dans l’espace',mgTitle:'Géométrie espace',icon:BoxIcon,description:'Cônes, pyramides, sections et volumes',mgDescription:'Cône, pyramide, section ary volume',keywords:'volume cube cylindre cone sphere pyramide section réduction tronc',group:'Géométrie',component:SpaceTopic},
+{id:'stats',title:'Statistiques & proportionnalité',mgTitle:'Statistique & proportionnalité',icon:ChartIcon,description:'Histogrammes, moyenne et pourcentages',mgDescription:'Histogramme, moyenne ary pourcentage',keywords:'statistique classes histogramme fréquence cumul moyenne classe modale proportion pourcentage',group:'Données',component:StatsTopic},
 ];
 const groups:Group[]=['Calculs & nombres','Algèbre','Géométrie','Données'];
 const groupMg:Record<Group,string>={'Calculs & nombres':'Kajy & isa','Algèbre':'Algèbre','Géométrie':'Géométrie','Données':'Données'};
 
 function useTheme(){
-  const [theme,setTheme]=useState<'dark'|'light'>(()=>{const s=typeof window!=='undefined'?localStorage.getItem('mathbepc-theme'):null;return s==='dark'?'dark':'light';});
-  useEffect(()=>{document.documentElement.setAttribute('data-theme',theme);localStorage.setItem('mathbepc-theme',theme);document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#0b0d12':'#145C48');},[theme]);
-  return {theme,toggle:()=>setTheme(t=>t==='dark'?'light':'dark')};
-}
-function usePWA(){
-  const [installPrompt,setInstallPrompt]=useState<any>(null);const [installed,setInstalled]=useState(false);const [offline,setOffline]=useState(()=>typeof navigator!=='undefined'?!navigator.onLine:false);
-  useEffect(()=>{const b=(e:Event)=>{e.preventDefault();setInstallPrompt(e);};const i=()=>setInstalled(true);const off=()=>setOffline(true);const on=()=>setOffline(false);window.addEventListener('beforeinstallprompt',b);window.addEventListener('appinstalled',i);window.addEventListener('offline',off);window.addEventListener('online',on);if(window.matchMedia('(display-mode: standalone)').matches)setInstalled(true);return()=>{window.removeEventListener('beforeinstallprompt',b);window.removeEventListener('appinstalled',i);window.removeEventListener('offline',off);window.removeEventListener('online',on);};},[]);
-  const install=useCallback(async()=>{if(!installPrompt)return;await installPrompt.prompt();const c=await installPrompt.userChoice;if(c.outcome==='accepted')setInstalled(true);setInstallPrompt(null);},[installPrompt]);
-  return {canInstall:!!installPrompt&&!installed,offline,install};
+  const [theme,setTheme]=useState<'dark'|'light'>(()=>localStorage.getItem('mathbepc-theme')==='dark'?'dark':'light');
+  useEffect(()=>{document.documentElement.setAttribute('data-theme',theme);localStorage.setItem('mathbepc-theme',theme);document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#111512':'#f7f8fa');},[theme]);
+  return{theme,toggle:()=>setTheme(t=>t==='dark'?'light':'dark')};
 }
 
-function AppLogo(){return <div className="w-10 h-10 rounded-xl bg-[#145c48] flex items-center justify-center shadow-[0_0_14px_rgba(20,92,72,.25)]"><svg viewBox="0 0 36 36" className="w-8 h-8"><path d="M6 17.5c4.2.3 7.3 1.2 10.2 3.1v9C13.4 27.9 10 27 6 26.7V17.5Z" fill="white"/><path d="M30 17.5c-4.2.3-7.3 1.2-10.2 3.1v9C22.6 27.9 26 27 30 26.7V17.5Z" fill="white"/><path d="M18 20.5v9" stroke="#dbe9e3" strokeWidth="1.2"/><text x="18" y="15" textAnchor="middle" fontSize="12" fontWeight="800" fill="#ffcd4a">π</text><path d="M29 5.5l2 2.2-1.1 2.5 1.5 2.2-1.5 3-1.2-2.4.8-2.6-1.2-2.1.7-2.8Z" fill="#da3434"/></svg></div>}
+function usePWA(){
+  const [installPrompt,setInstallPrompt]=useState<any>(null);
+  const [installed,setInstalled]=useState(false);
+  const [offline,setOffline]=useState(()=>!navigator.onLine);
+  useEffect(()=>{
+    const before=(e:Event)=>{e.preventDefault();setInstallPrompt(e);};
+    const done=()=>setInstalled(true);
+    const off=()=>setOffline(true);
+    const on=()=>setOffline(false);
+    window.addEventListener('beforeinstallprompt',before);
+    window.addEventListener('appinstalled',done);
+    window.addEventListener('offline',off);
+    window.addEventListener('online',on);
+    if(window.matchMedia('(display-mode: standalone)').matches)setInstalled(true);
+    return()=>{window.removeEventListener('beforeinstallprompt',before);window.removeEventListener('appinstalled',done);window.removeEventListener('offline',off);window.removeEventListener('online',on);};
+  },[]);
+  const install=useCallback(async()=>{if(!installPrompt)return;await installPrompt.prompt();const choice=await installPrompt.userChoice;if(choice.outcome==='accepted')setInstalled(true);setInstallPrompt(null);},[installPrompt]);
+  return{canInstall:!!installPrompt&&!installed,offline,install};
+}
+
+function AppLogo(){
+  return <span className="brand-mark"><svg viewBox="0 0 36 36" aria-hidden="true"><path d="M6 18c4 .2 7.2 1.1 10.1 3v8.6C13.3 28 10 27.1 6 26.8V18Z" fill="white"/><path d="M30 18c-4 .2-7.2 1.1-10.1 3v8.6C22.7 28 26 27.1 30 26.8V18Z" fill="white"/><path d="M18 21v8.6" stroke="#dce9e4" strokeWidth="1.2"/><text x="18" y="15" textAnchor="middle" fontSize="12" fontWeight="800" fill="#ffd454">π</text><path d="M28.6 5.2 30.8 8l-1 2.2 1.3 2.4-1.5 3-1.2-2.5.8-2.7-1.3-2.2.7-3Z" fill="#df3f44"/></svg></span>;
+}
+
+type GlyphName='solve'|'practice'|'lesson'|'exam'|'paper'|'history'|'program'|'progress'|'chapters';
+function Glyph({name}:{name:GlyphName}){
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {name==='solve'&&<><path d="M4 7h8"/><path d="M8 3v8"/><path d="M15 6h5"/><path d="M15 16h5"/><path d="M17.5 13.5v5"/></>}
+    {name==='practice'&&<><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="m8 12 2.2 2.2L16 8.5"/></>}
+    {name==='lesson'&&<><path d="M4 4.5c3.2 0 5.7.7 8 2.2v13c-2.3-1.5-4.8-2.2-8-2.2z"/><path d="M20 4.5c-3.2 0-5.7.7-8 2.2v13c2.3-1.5 4.8-2.2 8-2.2z"/></>}
+    {name==='exam'&&<><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></>}
+    {name==='paper'&&<><path d="M6 3.5h9l3 3V20.5H6z"/><path d="M14 3.5v4h4M9 12h6M9 15.5h5"/></>}
+    {name==='history'&&<><path d="M4 12a8 8 0 1 0 2.3-5.7L4 8.5"/><path d="M4 4.5v4h4"/><path d="M12 8v4l3 2"/></>}
+    {name==='program'&&<><path d="M5 5h14M5 10h14M5 15h9M5 20h9"/><circle cx="18" cy="17.5" r="2.5"/></>}
+    {name==='progress'&&<><path d="M5 19V9M12 19V5M19 19v-7"/></>}
+    {name==='chapters'&&<><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></>}
+  </svg>;
+}
 
 export default function App(){
-  const [view,setView]=useState<View>('home');const [selected,setSelected]=useState<string|null>(null);const [menuOpen,setMenuOpen]=useState(false);const [search,setSearch]=useState('');const [lang,setLang]=useState<Lang>(()=>getStoredLanguage());const [progressTick,setProgressTick]=useState(0);
-  const {theme,toggle}=useTheme();const {canInstall,offline,install}=usePWA();const tr=ui(lang);const current=chapters.find(c=>c.id===selected);const currentIndex=chapters.findIndex(c=>c.id===selected);const progress=useMemo(()=>loadProgress(),[progressTick]);
+  const [view,setView]=useState<View>('home');
+  const [selected,setSelected]=useState<string|null>(null);
+  const [menuOpen,setMenuOpen]=useState(false);
+  const [search,setSearch]=useState('');
+  const [lang,setLang]=useState<Lang>(()=>getStoredLanguage());
+  const [progressTick,setProgressTick]=useState(0);
+  const {theme,toggle}=useTheme();
+  const {canInstall,offline,install}=usePWA();
+  const tr=ui(lang);
+  const current=chapters.find(c=>c.id===selected);
+  const currentIndex=chapters.findIndex(c=>c.id===selected);
+  const progress=useMemo(()=>loadProgress(),[progressTick]);
+  const accuracy=progress.attempts?Math.round(progress.correct/progress.attempts*100):0;
+
   useEffect(()=>{const h=()=>setProgressTick(v=>v+1);window.addEventListener('mathbepc-progress',h);return()=>window.removeEventListener('mathbepc-progress',h);},[]);
   useEffect(()=>{
     window.history.replaceState({mathbepc:true,view:'home',selected:null} satisfies NavState,'');
@@ -80,75 +122,144 @@ export default function App(){
     window.addEventListener('popstate',onPop);
     return()=>window.removeEventListener('popstate',onPop);
   },[]);
-  const navigate=(v:View,nextSelected:string|null=null)=>{
-    const state:NavState={mathbepc:true,view:v,selected:v==='chapter'?nextSelected:null};
+
+  const navigate=(next:View,nextSelected:string|null=null)=>{
+    const state:NavState={mathbepc:true,view:next,selected:next==='chapter'?nextSelected:null};
     window.history.pushState(state,'');
-    setView(v);setSelected(state.selected);setMenuOpen(false);window.scrollTo({top:0,behavior:'smooth'});
+    setView(next);setSelected(state.selected);setMenuOpen(false);window.scrollTo({top:0,behavior:'smooth'});
   };
-  const go=(v:View)=>navigate(v,null);
+  const go=(next:View)=>navigate(next);
   const goBack=()=>{if(view!=='home')window.history.back();};
-  const goHome=()=>{setSearch('');navigate('home',null);};
+  const goHome=()=>{setSearch('');navigate('home');};
   const openChapter=(id:string)=>{recordVisit(id);navigate('chapter',id);};
   const toggleLang=()=>{const next=lang==='fr'?'mg':'fr';setLang(next);setStoredLanguage(next);};
-  const filtered=useMemo(()=>{const q=search.trim().toLowerCase();if(!q)return chapters;return chapters.filter(ch=>`${ch.title} ${ch.mgTitle} ${ch.description} ${ch.mgDescription} ${ch.keywords}`.toLowerCase().includes(q));},[search]);
-  const accuracy=progress.attempts?Math.round(progress.correct/progress.attempts*100):0;
+  const filtered=useMemo(()=>{
+    const q=search.trim().toLowerCase();
+    return q?chapters.filter(ch=>[ch.title,ch.mgTitle,ch.description,ch.mgDescription,ch.keywords].join(' ').toLowerCase().includes(q)):chapters;
+  },[search]);
   const pageTitle=view==='chapter'&&current
-    ? (lang==='mg'?current.mgTitle:current.title)
-    : ({smart:lang==='mg'?'Hamaha exercice':'Résoudre',subject:lang==='mg'?'Sujet BEPC':'Sujet BEPC',practice:tr.practice,lessons:tr.revise,exam:tr.exam,progress:tr.progress,annales:tr.annales,programme:lang==='mg'?'Programme ofisialy':'Programme officiel',chapters:tr.explore} as Partial<Record<View,string>>)[view]||'MathBEPC';
+    ?(lang==='mg'?current.mgTitle:current.title)
+    :({smart:tr.solve,subject:'Sujet BEPC',practice:tr.practice,lessons:tr.revise,exam:tr.exam,progress:tr.progress,annales:tr.annales,programme:lang==='mg'?'Programme ofisialy':'Programme de 3e',chapters:tr.explore} as Partial<Record<View,string>>)[view]||'MathBEPC';
+  const featured=['fractions','equations','geometry','stats'].map(id=>chapters.find(c=>c.id===id)!);
 
-  return <div className="min-h-screen bg-[--color-surface] text-[--color-text] transition-colors duration-300">
-    <header className="sticky top-0 z-50 border-b border-[--color-border]/80 bg-[--color-surface]/94 backdrop-blur-xl safe-top"><div className="max-w-6xl mx-auto px-3 sm:px-6 min-h-16 py-2 flex items-center justify-between gap-2">
-      <div className="flex items-center gap-2 min-w-0">
-        {view!=='home'&&<button onClick={goBack} className="h-11 px-3 rounded-xl border border-[--color-border] bg-[--color-card] flex items-center gap-1.5 cursor-pointer font-extrabold text-xs shrink-0" aria-label={lang==='mg'?'Hiverina':'Retour'}><ArrowLeftIcon className="w-4 h-4"/><span>{lang==='mg'?'Hiverina':'Retour'}</span></button>}
-        <button onClick={goHome} className={`items-center gap-3 cursor-pointer min-w-0 ${view==='home'?'flex':'hidden sm:flex'}`}><AppLogo/><div className="text-left hidden sm:block"><div className="text-sm font-extrabold">MathBEPC</div><div className="text-[10px] text-[--color-text-muted]">{tr.appSubtitle}</div></div></button>
-        {view!=='home'&&<div className="sm:hidden min-w-0"><p className="text-[9px] uppercase tracking-wider font-bold text-[--color-text-muted]">MathBEPC</p><p className="text-sm font-extrabold truncate">{pageTitle}</p></div>}
+  const menuItems:{id:View;label:string;icon:GlyphName}[]=[
+    {id:'home',label:tr.backHome,icon:'chapters'},
+    {id:'subject',label:lang==='mg'?'Sujet BEPC':'Résoudre un sujet BEPC',icon:'paper'},
+    {id:'exam',label:tr.exam,icon:'exam'},
+    {id:'annales',label:tr.annales,icon:'history'},
+    {id:'programme',label:lang==='mg'?'Programme ofisialy':'Programme de 3e',icon:'program'},
+    {id:'progress',label:tr.progress,icon:'progress'},
+    {id:'chapters',label:tr.explore,icon:'chapters'},
+  ];
+
+  return <div className="app-shell">
+    <header className="topbar safe-top">
+      <div className="topbar-inner">
+        <div className="topbar-left">
+          {view!=='home'
+            ?<button type="button" onClick={goBack} className="back-button"><ArrowLeftIcon/><span>{lang==='mg'?'Hiverina':'Retour'}</span></button>
+            :<button type="button" onClick={goHome} className="brand-button"><AppLogo/><span><strong>MathBEPC</strong><small>{tr.appSubtitle}</small></span></button>}
+          {view!=='home'&&<div className="page-location"><strong>{pageTitle}</strong><small>MathBEPC</small></div>}
+        </div>
+        <div className="topbar-actions">
+          {offline&&<span className="offline-dot" title={tr.offline}/>}
+          {canInstall&&<button type="button" onClick={install} className="install-button">{tr.install}</button>}
+          <button type="button" onClick={toggleLang} className="topbar-text-button" title={tr.languageTitle}>{tr.language}</button>
+          <button type="button" onClick={toggle} className="icon-button desktop-only" aria-label="Thème">{theme==='dark'?<SunIcon/>:<MoonIcon/>}</button>
+          <button type="button" onClick={()=>setMenuOpen(true)} className="icon-button desktop-only" aria-label="Menu"><MenuIcon/></button>
+        </div>
       </div>
-      <div className="flex items-center gap-1.5">{offline&&<span className="hidden sm:inline-flex px-2.5 py-1 rounded-lg bg-amber-500/10 text-[10px] font-semibold text-amber-500">{tr.offline}</span>}{canInstall&&<button onClick={install} className="hidden sm:inline-flex px-3 py-2 rounded-xl bg-[--color-accent] text-white text-xs font-semibold cursor-pointer">{tr.install}</button>}<button onClick={toggleLang} title={tr.languageTitle} className="h-10 min-w-10 px-2 rounded-xl bg-[--color-btn-bg] text-[11px] font-extrabold cursor-pointer">{tr.language}</button><button onClick={toggle} className="hidden sm:flex w-10 h-10 rounded-xl bg-[--color-btn-bg] items-center justify-center cursor-pointer">{theme==='dark'?<SunIcon className="w-4 h-4"/>:<MoonIcon className="w-4 h-4"/>}</button><button onClick={()=>setMenuOpen(v=>!v)} className="h-10 w-10 sm:w-auto sm:px-3 rounded-xl bg-[--color-btn-bg] flex items-center justify-center sm:gap-2 cursor-pointer font-bold text-xs">{menuOpen?<CloseIcon className="w-4 h-4"/>:<MenuIcon className="w-4 h-4"/>}<span className="hidden sm:inline">Menu</span></button></div>
-    </div>{menuOpen&&<div className="border-t border-[--color-border] bg-[--color-card]/98 shadow-xl"><div className="max-w-6xl mx-auto p-4 grid grid-cols-2 sm:grid-cols-4 gap-2">{[
-      ['home',tr.backHome],['smart',tr.solve],['subject',lang==='mg'?'Sujet iray manontolo':'Sujet BEPC complet'],['practice',tr.practice],['lessons',tr.revise],['exam',tr.exam],['annales',tr.annales],['programme',lang==='mg'?'Programme ofisialy':'Programme officiel'],['progress',tr.progress],['chapters',tr.explore]
-    ].map(([id,label])=><button key={id} onClick={()=>go(id as View)} className="p-3 rounded-xl bg-[--color-surface] border border-[--color-border] text-left text-xs font-bold cursor-pointer hover:border-[--color-accent]/40">{label}</button>)}</div></div>}</header>
+    </header>
 
-    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7 sm:py-10 pb-32 sm:pb-24">
-      {view==='home'&&<div className="animate-fade-up">
-        <section className="max-w-3xl mx-auto text-center pt-3 sm:pt-8"><span className="inline-flex px-3 py-1 rounded-full bg-[--color-accent-subtle] text-[--color-accent] text-[11px] font-bold">BEPC Madagascar • 3e</span><h1 className="mt-4 text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight">{tr.homeTitle}</h1><p className="mt-3 text-sm sm:text-base text-[--color-text-secondary] max-w-2xl mx-auto">{tr.homeLead}</p></section>
-        <section className="grid md:grid-cols-3 gap-4 mt-9 max-w-5xl mx-auto">
-          {[{id:'smart' as View,n:'01',title:tr.solve,desc:tr.solveDesc,accent:true},{id:'practice' as View,n:'02',title:tr.practice,desc:tr.practiceDesc},{id:'lessons' as View,n:'03',title:tr.revise,desc:tr.reviseDesc}].map(c=><button key={c.id} onClick={()=>go(c.id)} className={`text-left rounded-3xl border p-5 sm:p-6 transition-all cursor-pointer hover:-translate-y-0.5 ${c.accent?'border-[#145c48]/30 bg-[#145c48] text-white shadow-[0_10px_35px_rgba(20,92,72,.16)]':'border-[--color-border] bg-[--color-card] hover:border-[--color-accent]/30'}`}><span className={`text-[10px] font-mono font-bold ${c.accent?'text-white/60':'text-[--color-text-muted]'}`}>{c.n}</span><h2 className="text-xl font-extrabold mt-4">{c.title}</h2><p className={`text-sm leading-relaxed mt-2 ${c.accent?'text-white/80':'text-[--color-text-secondary]'}`}>{c.desc}</p><span className={`inline-flex mt-5 text-xs font-bold ${c.accent?'text-[#ffdf75]':'text-[--color-accent]'}`}>{lang==='mg'?'Hanomboka →':'Commencer →'}</span></button>)}
+    <main className="app-main">
+      {view==='home'&&<div className="home-page animate-fade-up">
+        <section className="home-hero">
+          <p className="home-kicker">BEPC • Madagascar • 3e</p>
+          <h1>{tr.homeTitle}</h1>
+          <p>{tr.homeLead}</p>
         </section>
-        <section className="grid grid-cols-2 lg:grid-cols-3 gap-3 mt-5 max-w-5xl mx-auto">{[{id:'subject' as View,title:lang==='mg'?'Sujet iray manontolo':'Résoudre un sujet BEPC',sub:lang==='mg'?'PDF • sary • texte':'PDF • photo • texte'},{id:'exam' as View,title:tr.exam,sub:lang==='mg'?'Sujet 10 • chronomètre':'10 questions • chronomètre'},{id:'annales' as View,title:tr.annales,sub:lang==='mg'?'Sujets Madagascar':'Sujets Madagascar'},{id:'programme' as View,title:lang==='mg'?'Programme ofisialy':'Programme officiel',sub:'3e Madagascar'},{id:'progress' as View,title:tr.progress,sub:`${accuracy}% ${lang==='mg'?'fahombiazana':'de réussite'}`},{id:'chapters' as View,title:tr.explore,sub:`${chapters.length} chapitres`}].map(x=><button key={x.id} onClick={()=>go(x.id)} className="rounded-2xl border border-[--color-border] bg-[--color-card] p-4 text-left cursor-pointer hover:border-[--color-accent]/35"><p className="font-bold text-sm">{x.title}</p><p className="text-[10px] text-[--color-text-muted] mt-1">{x.sub}</p></button>)}</section>
-        <section className="max-w-5xl mx-auto mt-7 rounded-2xl border border-[--color-border] bg-[--color-card] p-4 flex flex-wrap items-center justify-between gap-3"><div><p className="font-bold text-sm">{lang==='mg'?'Mandroso tsikelikely':'Ta progression sur cet appareil'}</p><p className="text-xs text-[--color-text-secondary] mt-1">{progress.attempts} {lang==='mg'?'fanazarana •':'exercices •'} {progress.correct} {lang==='mg'?'marina •':'réussis •'} {progress.streakDays} {lang==='mg'?'andro misesy':'jour(s) de suite'}</p></div><button onClick={()=>go('progress')} className="px-4 py-2.5 rounded-xl bg-[--color-btn-bg] text-xs font-bold cursor-pointer">{tr.progress}</button></section>
+
+        <section className="home-main-actions">
+          <button type="button" onClick={()=>go('smart')} className="home-primary-card">
+            <span className="home-action-icon"><Glyph name="solve"/></span>
+            <span className="home-action-copy"><strong>{tr.solve}</strong><small>{tr.solveDesc}</small></span>
+            <span className="home-action-arrow">→</span>
+          </button>
+          <div className="home-secondary-actions">
+            <button type="button" onClick={()=>go('practice')} className="home-secondary-card"><span className="home-action-icon soft"><Glyph name="practice"/></span><span><strong>{tr.practice}</strong><small>{tr.practiceDesc}</small></span></button>
+            <button type="button" onClick={()=>go('lessons')} className="home-secondary-card"><span className="home-action-icon soft"><Glyph name="lesson"/></span><span><strong>{tr.revise}</strong><small>{tr.reviseDesc}</small></span></button>
+          </div>
+        </section>
+
+        <section className="home-section">
+          <div className="section-title-row"><div><h2>{lang==='mg'?'Hiomana amin’ny BEPC':'Préparer le BEPC'}</h2><p>{lang==='mg'?'Fitaovana ho an’ny fanadinana.':'Les outils utiles avant l’examen.'}</p></div></div>
+          <div className="tool-grid">
+            {[
+              {id:'exam' as View,name:tr.exam,sub:lang==='mg'?'Chronomètre • /20':'Chronomètre • note /20',icon:'exam' as GlyphName},
+              {id:'subject' as View,name:lang==='mg'?'Sujet iray manontolo':'Résoudre un sujet',sub:'PDF • image • texte',icon:'paper' as GlyphName},
+              {id:'annales' as View,name:tr.annales,sub:'2009 — 2018',icon:'history' as GlyphName},
+              {id:'programme' as View,name:lang==='mg'?'Programme ofisialy':'Programme de 3e',sub:'Madagascar',icon:'program' as GlyphName},
+            ].map(item=><button key={item.id} type="button" onClick={()=>go(item.id)} className="tool-card"><span><Glyph name={item.icon}/></span><strong>{item.name}</strong><small>{item.sub}</small></button>)}
+          </div>
+        </section>
+
+        <section className="home-section">
+          <div className="section-title-row"><div><h2>{lang==='mg'?'Toko fampiasa matetika':'Chapitres essentiels'}</h2><p>{lang==='mg'?'Fidirana haingana amin’ny toko lehibe.':'Accès rapide aux notions les plus travaillées.'}</p></div><button type="button" onClick={()=>go('chapters')} className="text-button">{tr.explore} →</button></div>
+          <div className="featured-chapters">{featured.map(ch=><button key={ch.id} type="button" onClick={()=>openChapter(ch.id)} className="featured-chapter"><span className="featured-chapter-icon"><ch.icon/></span><div><strong>{lang==='mg'?ch.mgTitle:ch.title}</strong><small>{lang==='mg'?ch.mgDescription:ch.description}</small></div><i>→</i></button>)}</div>
+        </section>
+
+        <section className="progress-strip" onClick={()=>go('progress')} onKeyDown={e=>{if(e.key==='Enter'||e.key===' ')go('progress');}} role="button" tabIndex={0}>
+          <div><span className="progress-strip-icon"><Glyph name="progress"/></span><p><strong>{tr.progress}</strong><small>{progress.attempts} {lang==='mg'?'fanazarana':'exercices'} • {accuracy}% {lang==='mg'?'fahombiazana':'de réussite'}</small></p></div><span>→</span>
+        </section>
       </div>}
 
-      {view==='smart'&&<SmartSolve lang={lang} onOpenChapter={openChapter}/>} {view==='subject'&&<SubjectSolver lang={lang} onOpenChapter={openChapter}/>} {view==='practice'&&<PracticeMode lang={lang}/>} {view==='lessons'&&<Lessons lang={lang} onOpenChapter={openChapter}/>} {view==='exam'&&<ExamMode lang={lang}/>} {view==='progress'&&<ProgressDashboard lang={lang}/>} {view==='annales'&&<Annales lang={lang} onStartExam={()=>go('exam')}/>} {view==='programme'&&<ProgrammeMap lang={lang} onOpenChapter={openChapter}/>} 
+      {view==='smart'&&<SmartSolve lang={lang} onOpenChapter={openChapter}/>}
+      {view==='subject'&&<SubjectSolver lang={lang} onOpenChapter={openChapter}/>}
+      {view==='practice'&&<PracticeMode lang={lang}/>}
+      {view==='lessons'&&<Lessons lang={lang} onOpenChapter={openChapter}/>}
+      {view==='exam'&&<ExamMode lang={lang}/>}
+      {view==='progress'&&<ProgressDashboard lang={lang}/>}
+      {view==='annales'&&<Annales lang={lang} onStartExam={()=>go('exam')}/>}
+      {view==='programme'&&<ProgrammeMap lang={lang} onOpenChapter={openChapter}/>}
 
-      {view==='chapters'&&<div className="animate-fade-up"><div className="max-w-3xl"><h1 className="text-2xl sm:text-4xl font-extrabold">{tr.explore}</h1><p className="mt-2 text-sm text-[--color-text-secondary]">{lang==='mg'?'Safidio ny toko raha fantatrao sahady izay tianao hianarana.':'Choisis directement un chapitre si tu sais déjà quelle notion travailler.'}</p></div><input value={search} onChange={e=>setSearch(e.target.value)} placeholder={tr.searchChapter} className="mt-5 w-full max-w-2xl px-4 py-3 rounded-xl border border-[--color-input-border] bg-[--color-input-bg]"/><div className="space-y-7 mt-7">{groups.map(group=>{const list=filtered.filter(c=>c.group===group);if(!list.length)return null;return <section key={group}><h2 className="text-xs uppercase tracking-widest font-bold text-[--color-text-muted] mb-3">{lang==='mg'?groupMg[group]:group}</h2><div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{list.map(ch=><button key={ch.id} onClick={()=>openChapter(ch.id)} className="rounded-2xl border border-[--color-border] bg-[--color-card] p-4 text-left flex gap-3 cursor-pointer hover:border-[--color-accent]/35"><div className="w-11 h-11 rounded-xl bg-[--color-btn-bg] flex items-center justify-center flex-shrink-0"><ch.icon className="w-5 h-5 text-[--color-accent]"/></div><div><p className="font-bold text-sm">{lang==='mg'?ch.mgTitle:ch.title}</p><p className="text-xs text-[--color-text-secondary] mt-1">{lang==='mg'?ch.mgDescription:ch.description}</p></div></button>)}</div></section>})}{!filtered.length&&<p className="text-sm text-[--color-text-muted]">{tr.noResult}</p>}</div></div>}
+      {view==='chapters'&&<div className="page-medium animate-fade-up">
+        <header className="page-heading"><div><h1 className="page-title">{tr.explore}</h1><p className="page-description">{lang==='mg'?'Safidio ny toko tianao hianarana na hanaovana kajy.':'Choisis la notion que tu veux réviser ou calculer.'}</p></div></header>
+        <label className="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input value={search} onChange={e=>setSearch(e.target.value)} placeholder={tr.searchChapter}/></label>
+        <div className="chapter-groups">{groups.map(group=>{const list=filtered.filter(c=>c.group===group);if(!list.length)return null;return <section key={group}><h2>{lang==='mg'?groupMg[group]:group}</h2><div className="chapter-grid">{list.map(ch=><button key={ch.id} type="button" onClick={()=>openChapter(ch.id)} className="chapter-card"><span className="chapter-icon"><ch.icon/></span><div><strong>{lang==='mg'?ch.mgTitle:ch.title}</strong><small>{lang==='mg'?ch.mgDescription:ch.description}</small></div><i>→</i></button>)}</div></section>;})}{!filtered.length&&<p className="empty-state">{tr.noResult}</p>}</div>
+      </div>}
 
-      {view==='chapter'&&current&&<div className="max-w-3xl mx-auto animate-fade-up"><div className="flex flex-wrap gap-2 mb-6"><button onClick={()=>go('chapters')} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[--color-btn-bg] text-xs font-bold cursor-pointer"><ArrowLeftIcon className="w-3.5 h-3.5"/>{tr.changeChapter}</button><button onClick={()=>go('lessons')} className="px-3 py-2 rounded-xl bg-[--color-accent-subtle] text-[--color-accent] text-xs font-bold cursor-pointer">{lang==='mg'?'Hamerina ny lesona':'Réviser la méthode'}</button></div><div className="flex items-center gap-4 mb-6"><div className="w-13 h-13 rounded-2xl bg-[--color-accent] flex items-center justify-center shadow-[0_4px_20px_var(--color-accent-glow)]"><current.icon className="w-6 h-6 text-white"/></div><div><h1 className="text-xl sm:text-2xl font-extrabold">{lang==='mg'?current.mgTitle:current.title}</h1><p className="text-xs text-[--color-text-muted] mt-1">{lang==='mg'?current.mgDescription:current.description}</p></div></div><div className="bg-[--color-card] rounded-2xl border border-[--color-border] p-4 sm:p-7 shadow-[0_4px_32px_var(--color-glow)]"><current.component/></div><div className="flex justify-between gap-3 mt-7">{currentIndex>0?<button onClick={()=>openChapter(chapters[currentIndex-1].id)} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[--color-btn-bg] text-xs font-bold cursor-pointer"><ArrowLeftIcon className="w-3 h-3"/>{tr.prev}</button>:<span/>}{currentIndex<chapters.length-1?<button onClick={()=>openChapter(chapters[currentIndex+1].id)} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[--color-btn-bg] text-xs font-bold cursor-pointer">{tr.next}<ArrowRightIcon className="w-3 h-3"/></button>:<span/>}</div></div>}
+      {view==='chapter'&&current&&<div className="page-medium animate-fade-up">
+        <header className="chapter-header">
+          <span className="chapter-hero-icon"><current.icon/></span>
+          <div><h1>{lang==='mg'?current.mgTitle:current.title}</h1><p>{lang==='mg'?current.mgDescription:current.description}</p><div className="chapter-header-actions"><button type="button" onClick={()=>go('lessons')} className="secondary-button">{lang==='mg'?'Lesona':'Voir le cours'}</button><button type="button" onClick={()=>go('chapters')} className="text-button">{tr.changeChapter}</button></div></div>
+        </header>
+        <section className="topic-workspace"><current.component/></section>
+        <nav className="chapter-pagination">
+          {currentIndex>0?<button type="button" onClick={()=>openChapter(chapters[currentIndex-1].id)}><ArrowLeftIcon/><span><small>{tr.prev}</small><strong>{lang==='mg'?chapters[currentIndex-1].mgTitle:chapters[currentIndex-1].title}</strong></span></button>:<span/>}
+          {currentIndex<chapters.length-1?<button type="button" onClick={()=>openChapter(chapters[currentIndex+1].id)}><span><small>{tr.next}</small><strong>{lang==='mg'?chapters[currentIndex+1].mgTitle:chapters[currentIndex+1].title}</strong></span><ArrowRightIcon/></button>:<span/>}
+        </nav>
+      </div>}
     </main>
 
-    <nav className="mobile-bottom-nav sm:hidden fixed bottom-0 inset-x-0 z-50 border-t border-[--color-border] bg-[--color-card]/96 backdrop-blur-xl px-1 pt-1" aria-label={lang==='mg'?'Navigation lehibe':'Navigation principale'}>
-      <div className="grid grid-cols-5">
-        {([
-          ['home',lang==='mg'?'Fandraisana':'Accueil','home'],
-          ['smart',lang==='mg'?'Hamaha':'Résoudre','solve'],
-          ['practice',lang==='mg'?'Fanazarana':'Exercices','practice'],
-          ['lessons',lang==='mg'?'Lesona':'Réviser','lesson'],
-          ['menu',lang==='mg'?'Hafa':'Plus','menu']
-        ] as const).map(([id,label,icon])=>{
-          const active=id==='menu'?menuOpen:view===id;
-          return <button key={id} onClick={()=>id==='menu'?setMenuOpen(v=>!v):go(id as View)} className="mobile-nav-button px-1 py-1.5 text-[9px] font-bold text-[--color-text-muted] cursor-pointer" aria-current={active?'page':undefined}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className="mobile-nav-icon" aria-hidden="true">
-              {icon==='home'&&<><path d="M3.5 10.5 12 3.5l8.5 7"/><path d="M5.5 9.5V20h13V9.5"/><path d="M9.5 20v-6h5v6"/></>}
-              {icon==='solve'&&<><path d="M4 5h7"/><path d="M7.5 2v6"/><path d="M14 5h6"/><path d="m15 13 5 5"/><path d="m20 13-5 5"/></>}
-              {icon==='practice'&&<><path d="M4 5h16v14H4z"/><path d="m8 12 2.2 2.2L16 8.5"/></>}
-              {icon==='lesson'&&<><path d="M4 4.5c3.2 0 5.7.7 8 2.2v13c-2.3-1.5-4.8-2.2-8-2.2z"/><path d="M20 4.5c-3.2 0-5.7.7-8 2.2v13c2.3-1.5 4.8-2.2 8-2.2z"/></>}
-              {icon==='menu'&&<><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></>}
-            </svg>
-            <span>{label}</span>
-          </button>;
-        })}
-      </div>
+    <nav className="bottom-nav safe-bottom" aria-label={lang==='mg'?'Navigation':'Navigation principale'}>
+      {[
+        {id:'home' as View,label:lang==='mg'?'Fandraisana':'Accueil',icon:'chapters' as GlyphName},
+        {id:'smart' as View,label:lang==='mg'?'Hamaha':'Résoudre',icon:'solve' as GlyphName},
+        {id:'practice' as View,label:lang==='mg'?'Fanazarana':'Exercices',icon:'practice' as GlyphName},
+        {id:'lessons' as View,label:lang==='mg'?'Lesona':'Réviser',icon:'lesson' as GlyphName},
+      ].map(item=><button key={item.id} type="button" onClick={()=>go(item.id)} className={view===item.id?'is-active':''} aria-current={view===item.id?'page':undefined}><Glyph name={item.icon}/><span>{item.label}</span></button>)}
+      <button type="button" onClick={()=>setMenuOpen(true)} className={['exam','subject','annales','programme','progress','chapters','chapter'].includes(view)?'is-active':''}><MenuIcon/><span>{lang==='mg'?'Hafa':'Plus'}</span></button>
     </nav>
 
-    <footer className="border-t border-[--color-border] mt-8"><div className="max-w-6xl mx-auto px-4 py-5 flex flex-col sm:flex-row justify-between gap-2 text-[10px] text-[--color-text-muted]"><span>MathBEPC Madagascar • v{__APP_VERSION__} • Révision BEPC 3e</span><span>{lang==='mg'?'Ny calculateur dia manampy; ny fahatakarana no tanjona.':'Le calculateur aide ; comprendre la méthode reste l’objectif.'}</span></div></footer>
+    {menuOpen&&<div className="nav-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)setMenuOpen(false);}}>
+      <aside className="nav-panel" role="dialog" aria-modal="true" aria-label="Navigation">
+        <div className="nav-panel-head"><div><strong>MathBEPC</strong><small>{tr.appSubtitle}</small></div><button type="button" onClick={()=>setMenuOpen(false)} className="icon-button"><CloseIcon/></button></div>
+        <div className="nav-panel-list">{menuItems.map(item=><button key={item.id} type="button" onClick={()=>go(item.id)}><span><Glyph name={item.icon}/></span><strong>{item.label}</strong><i>→</i></button>)}</div>
+        <div className="nav-panel-settings"><button type="button" onClick={toggle}><span>{theme==='dark'?<SunIcon/>:<MoonIcon/>}</span>{theme==='dark'?(lang==='mg'?'Mode mazava':'Mode clair'):(lang==='mg'?'Mode maizina':'Mode sombre')}</button>{canInstall&&<button type="button" onClick={install}><span>↓</span>{tr.install}</button>}</div>
+        <p className="nav-version">MathBEPC v{__APP_VERSION__}{offline&&<span> • {tr.offline}</span>}</p>
+      </aside>
+    </div>}
+
+    <footer className="desktop-footer"><span>MathBEPC Madagascar • v{__APP_VERSION__}</span><span>{lang==='mg'?'Matematika kilasy faha-3 • BEPC':'Mathématiques de 3e • BEPC'}</span></footer>
   </div>;
 }
