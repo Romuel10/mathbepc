@@ -14,13 +14,13 @@ test('navigation exposes an always-visible back action outside home',()=>{
 
 test('mobile navigation keeps the four learning routes one tap away',()=>{
   for(const route of ["'home'","'smart'","'practice'","'lessons'"]) assert.match(app,new RegExp(route));
-  assert.match(app,/mobile-bottom-nav/);
+  assert.match(app,/bottom-nav/);
 });
 
 test('solutions use readable step and fraction presentation',()=>{
   assert.match(steps,/Étape/);
   assert.match(steps,/Pourquoi \?/);
   assert.match(steps,/math-frac/);
-  assert.match(css,/\.math-expression/);
-  assert.match(css,/\.final-answer/);
+  assert.match(css,/\.math-line/);
+  assert.match(css,/\.answer-box/);
 });
