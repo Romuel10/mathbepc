@@ -32,13 +32,13 @@ export default function AbsoluteValueTopic() {
       </>}
       {tab==='equation'&&<>
         <p className="text-sm text-[--color-text-secondary]">Résoudre |ax + b| = c</p>
-        <div className="grid grid-cols-3 gap-4"><InputField label="a" value={eqA} onChange={setEqA} placeholder="1" /><InputField label="b" value={eqB} onChange={setEqB} placeholder="-3" /><InputField label="c" value={eqC} onChange={setEqC} placeholder="5" /></div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4"><InputField label="a" value={eqA} onChange={setEqA} placeholder="1" /><InputField label="b" value={eqB} onChange={setEqB} placeholder="-3" /><InputField label="c" value={eqC} onChange={setEqC} placeholder="5" /></div>
         <SolveButton onClick={solveEq} label="Résoudre" />
         <StepDisplay steps={eqSteps} result={eqResult} />
       </>}
       {tab==='inequation'&&<>
         <p className="text-sm text-[--color-text-secondary]">Résoudre |ax + b| ○ c</p>
-        <div className="grid grid-cols-3 gap-4"><InputField label="a" value={ineqA} onChange={setIneqA} placeholder="1" /><InputField label="b" value={ineqB} onChange={setIneqB} placeholder="-2" /><InputField label="c" value={ineqC} onChange={setIneqC} placeholder="4" /></div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4"><InputField label="a" value={ineqA} onChange={setIneqA} placeholder="1" /><InputField label="b" value={ineqB} onChange={setIneqB} placeholder="-2" /><InputField label="c" value={ineqC} onChange={setIneqC} placeholder="4" /></div>
         <div className="flex gap-1.5 justify-center">{['<','≤','>','≥'].map(s=>(<SignButton key={s} active={ineqSign===s} onClick={()=>setIneqSign(s)}>{s}</SignButton>))}</div>
         <SolveButton onClick={solveIneq} label="Résoudre" />
         <StepDisplay steps={ineqSteps} result={ineqResult} />

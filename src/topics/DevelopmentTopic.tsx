@@ -21,7 +21,7 @@ export default function DevelopmentTopic() {
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-2"><TabButton active={tab==='identity'} onClick={()=>setTab('identity')}>Identités remarquables</TabButton><TabButton active={tab==='general'} onClick={()=>setTab('general')}>(ax+b)(cx+d)</TabButton></div>
+      <div className="flex gap-2 flex-wrap"><TabButton active={tab==='identity'} onClick={()=>setTab('identity')}>Identités remarquables</TabButton><TabButton active={tab==='general'} onClick={()=>setTab('general')}>(ax+b)(cx+d)</TabButton></div>
       {tab==='identity'&&<>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {identities.map(id=>(

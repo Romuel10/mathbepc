@@ -41,7 +41,7 @@ export default function FactorizationTopic() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2"><span className="text-[11px] text-[--color-text-muted] self-center">Exemples :</span>{trinomeExamples.map((ex,i)=>(<ExampleButton key={i} onClick={()=>{setA(ex.a);setB(ex.b);setC(ex.c);}}>{ex.label}</ExampleButton>))}</div>
-        <div className="grid grid-cols-3 gap-4"><InputField label="a (x²)" value={a} onChange={setA} placeholder="1" /><InputField label="b (x)" value={b} onChange={setB} placeholder="6" /><InputField label="c" value={c} onChange={setC} placeholder="9" /></div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4"><InputField label="a (x²)" value={a} onChange={setA} placeholder="1" /><InputField label="b (x)" value={b} onChange={setB} placeholder="6" /><InputField label="c" value={c} onChange={setC} placeholder="9" /></div>
         <SolveButton onClick={solve} label="Factoriser" /><StepDisplay steps={steps} result={result} />
       </>}
 

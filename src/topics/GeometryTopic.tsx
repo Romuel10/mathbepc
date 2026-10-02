@@ -123,7 +123,7 @@ export default function GeometryTopic() {
 
       {tab==='thales'&&<>
         <p className="text-sm text-[--color-text-secondary]">a/b = c/x</p>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <InputField label="a" value={tA} onChange={setTA} placeholder="4" />
           <InputField label="b" value={tB} onChange={setTB} placeholder="6" />
           <InputField label="c" value={tC} onChange={setTC} placeholder="5" />
@@ -139,7 +139,7 @@ export default function GeometryTopic() {
       </>}
       {tab==='similar'&&<>
         <p className="text-sm text-[--color-text-secondary]">Comparer les trois rapports des côtés correspondants.</p>
-        <div className="grid grid-cols-3 gap-3"><InputField label="a₁" value={simA1} onChange={setSimA1}/><InputField label="b₁" value={simB1} onChange={setSimB1}/><InputField label="c₁" value={simC1} onChange={setSimC1}/><InputField label="a₂" value={simA2} onChange={setSimA2}/><InputField label="b₂" value={simB2} onChange={setSimB2}/><InputField label="c₂" value={simC2} onChange={setSimC2}/></div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3"><InputField label="a₁" value={simA1} onChange={setSimA1}/><InputField label="b₁" value={simB1} onChange={setSimB1}/><InputField label="c₁" value={simC1} onChange={setSimC1}/><InputField label="a₂" value={simA2} onChange={setSimA2}/><InputField label="b₂" value={simB2} onChange={setSimB2}/><InputField label="c₂" value={simC2} onChange={setSimC2}/></div>
         <SolveButton onClick={solveSim} label="Comparer les triangles"/><StepDisplay steps={tSteps} result={tResult}/>
       </>}
       {tab==='trig'&&<>
