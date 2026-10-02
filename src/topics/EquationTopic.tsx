@@ -87,14 +87,14 @@ export default function EquationTopic() {
       </>}
       {tab==='quadratic'&&<>
         <p className="text-sm text-[--color-text-secondary]">ax² + bx + c = 0</p>
-        <div className="grid grid-cols-3 gap-4"><InputField label="a" value={qA} onChange={setQA} placeholder="1" /><InputField label="b" value={qB} onChange={setQB} placeholder="-5" /><InputField label="c" value={qC} onChange={setQC} placeholder="6" /></div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4"><InputField label="a" value={qA} onChange={setQA} placeholder="1" /><InputField label="b" value={qB} onChange={setQB} placeholder="-5" /><InputField label="c" value={qC} onChange={setQC} placeholder="6" /></div>
         <SolveButton onClick={solveQ} /><StepDisplay steps={qSteps} result={qResult} />
       </>}
       {tab==='system'&&<>
         <p className="text-sm text-[--color-text-secondary]">Système 2 équations / 2 inconnues (Cramer)</p>
         <div className="space-y-3 p-4 rounded-lg bg-[--color-inset] border border-[--color-border]">
-          <div className="grid grid-cols-3 gap-3"><InputField label="a₁" value={s1a} onChange={setS1a} placeholder="2" /><InputField label="b₁" value={s1b} onChange={setS1b} placeholder="3" /><InputField label="= c₁" value={s1c} onChange={setS1c} placeholder="8" /></div>
-          <div className="grid grid-cols-3 gap-3"><InputField label="a₂" value={s2a} onChange={setS2a} placeholder="3" /><InputField label="b₂" value={s2b} onChange={setS2b} placeholder="-2" /><InputField label="= c₂" value={s2c} onChange={setS2c} placeholder="1" /></div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3"><InputField label="a₁" value={s1a} onChange={setS1a} placeholder="2" /><InputField label="b₁" value={s1b} onChange={setS1b} placeholder="3" /><InputField label="= c₁" value={s1c} onChange={setS1c} placeholder="8" /></div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3"><InputField label="a₂" value={s2a} onChange={setS2a} placeholder="3" /><InputField label="b₂" value={s2b} onChange={setS2b} placeholder="-2" /><InputField label="= c₂" value={s2c} onChange={setS2c} placeholder="1" /></div>
         </div>
         <SolveButton onClick={solveS} /><StepDisplay steps={sSteps} result={sResult} />
       </>}

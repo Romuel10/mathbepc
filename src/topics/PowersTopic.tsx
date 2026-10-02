@@ -18,7 +18,7 @@ export default function PowersTopic() {
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-2"><TabButton active={tab==='calc'} onClick={()=>setTab('calc')}>Calculer</TabButton><TabButton active={tab==='rules'} onClick={()=>setTab('rules')}>Règles</TabButton></div>
+      <div className="flex gap-2 flex-wrap"><TabButton active={tab==='calc'} onClick={()=>setTab('calc')}>Calculer</TabButton><TabButton active={tab==='rules'} onClick={()=>setTab('rules')}>Règles</TabButton></div>
       {tab==='calc'&&<>
         <p className="text-sm text-[--color-text-secondary]">Calculer une puissance.</p>
         <div className="flex flex-wrap gap-2">{[{b:'2',e:'10'},{b:'3',e:'5'},{b:'5',e:'-2'},{b:'7',e:'0'}].map((ex,i)=>(<ExampleButton key={i} onClick={()=>{setBase(ex.b);setExp(ex.e);}}>{ex.b}^{ex.e}</ExampleButton>))}</div>
