@@ -1131,3 +1131,144 @@ input[type="number"] { -moz-appearance: textfield; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0s !important; animation-duration: 0s !important; }
 }
+
+
+/* ---------- Display hardening: phones, long formulas and dense calculators ---------- */
+
+.topbar-left {
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+.topbar-actions {
+  flex: 0 0 auto;
+}
+.page-location {
+  min-width: 0;
+}
+
+.topic-workspace,
+.topic-workspace > div,
+.topic-workspace .grid,
+.topic-workspace .grid > *,
+.topic-workspace .flex,
+.topic-workspace .field {
+  min-width: 0;
+}
+.topic-workspace button,
+.topic-workspace input,
+.topic-workspace select,
+.topic-workspace textarea {
+  max-width: 100%;
+}
+.topic-workspace .tab-button {
+  min-width: 0;
+  white-space: normal;
+  line-height: 1.25;
+}
+.topic-workspace .font-mono,
+.topic-workspace code {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.topic-workspace [class*="overflow-x-auto"] {
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+.topic-workspace svg,
+.topic-workspace canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.math-line,
+.answer-box > div {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+.solution-row,
+.solution-row-head,
+.explanation-box,
+.answer-box {
+  min-width: 0;
+}
+.nav-panel-list {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+.nav-panel-settings {
+  margin-top: 12px;
+}
+.bottom-nav span {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .app-main {
+    padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .topic-workspace {
+    overflow: hidden;
+  }
+
+  .topic-workspace .grid {
+    width: 100%;
+  }
+
+  .topic-workspace .rounded-xl,
+  .topic-workspace .rounded-lg {
+    max-width: 100%;
+  }
+
+  .solution-sheet,
+  .subject-question-card,
+  .lesson-card,
+  .exam-question-card,
+  .correction-card {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 390px) {
+  .topic-workspace .grid-cols-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .control-panel,
+  .action-row,
+  .math-key-actions,
+  .metrics-grid,
+  .chapter-pagination {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .chapter-pagination > button:last-child {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .home-primary-card {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .home-primary-card .home-action-arrow {
+    display: none;
+  }
+
+  .tool-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
