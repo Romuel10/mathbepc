@@ -1,4 +1,5 @@
 import type { Lang } from '../utils/i18n';
+import PageHeader from './PageHeader';
 
 const annales=[
   {year:2018,url:'https://www.lechaya.com/madagascar/subjects/madagascar-bepc-general-math-2018',corrected:true},
@@ -15,5 +16,21 @@ const annales=[
 
 export default function Annales({lang,onStartExam}:{lang:Lang;onStartExam:()=>void}){
   const mg=lang==='mg';
-  return <div className="max-w-4xl mx-auto animate-fade-up"><h1 className="text-2xl sm:text-4xl font-extrabold">{mg?'Sujet BEPC taloha':'Annales BEPC Madagascar'}</h1><p className="mt-2 text-sm text-[--color-text-secondary]">{mg?'Sujet matematika BEPC taloha. Mila internet ny rohy ivelany.':'Accès à des sujets de mathématiques BEPC Madagascar disponibles sur une ressource externe. Une connexion est nécessaire pour les ouvrir.'}</p><div className="mt-5 p-4 rounded-2xl border border-[--color-accent]/20 bg-[--color-accent-subtle] flex flex-col sm:flex-row sm:items-center justify-between gap-3"><div><p className="font-bold">{mg?'Te hanao simulation tsy misy internet?':'Tu veux t’entraîner hors ligne ?'}</p><p className="text-xs text-[--color-text-secondary] mt-1">{mg?'Ny mode examen dia mamorona sujet mifangaro ary manome naoty /20.':'Le mode examen génère une épreuve mélangée et donne une note sur 20.'}</p></div><button onClick={onStartExam} className="px-4 py-2.5 rounded-xl bg-[--color-accent] text-white text-xs font-bold cursor-pointer">{mg?'Simulation BEPC':'Lancer une simulation'}</button></div><div className="grid sm:grid-cols-2 gap-3 mt-5">{annales.map(a=><a key={a.year} href={a.url} target="_blank" rel="noreferrer" className="rounded-2xl border border-[--color-border] bg-[--color-card] p-4 hover:border-[--color-accent]/40 transition-colors"><div className="flex justify-between items-start"><div><p className="text-xl font-extrabold">BEPC {a.year}</p><p className="text-xs text-[--color-text-secondary] mt-1">Mathématiques • Madagascar</p></div><span className={`text-[10px] px-2 py-1 rounded-full ${a.corrected?'bg-[--color-ok-bg] text-[--color-ok-text]':'bg-[--color-btn-bg] text-[--color-text-muted]'}`}>{a.corrected?(mg?'Corrigé misy':'Corrigé disponible'):(mg?'Sujet ihany':'Sujet')}</span></div><p className="text-xs font-semibold text-[--color-accent] mt-4">{mg?'Sokafy ny sujet →':'Ouvrir le sujet →'}</p></a>)}</div><p className="text-[10px] text-[--color-text-muted] mt-5">{mg?'Ireo rohy ireo dia mankany amin’ny tranonkala LeChaya ary tsy tahirin’ny MathBEPC ny PDF.':'Les liens ci-dessus pointent vers LeChaya ; les PDF ne sont pas copiés ni hébergés dans MathBEPC.'}</p></div>;
+  return <div className="page-medium animate-fade-up">
+    <PageHeader title={mg?'Sujet BEPC taloha':'Annales BEPC'} description={mg?'Manao fanazaran-tena amin’ny sujet matematika BEPC Madagascar taloha.':'Travaille à partir d’anciens sujets de mathématiques du BEPC Madagascar.'}/>
+
+    <section className="exam-callout">
+      <div><h2>{mg?'Simulation tsy misy internet':'Simulation hors ligne'}</h2><p>{mg?'Fanontaniana mifangaro sy naoty /20.':'10 questions mélangées, chronomètre et note sur 20.'}</p></div>
+      <button type="button" onClick={onStartExam} className="primary-button">{mg?'Hanomboka':'Lancer une simulation'}</button>
+    </section>
+
+    <div className="annales-list">
+      {annales.map(a=><a key={a.year} href={a.url} target="_blank" rel="noreferrer" className="annale-row">
+        <div className="annale-year">{a.year}</div>
+        <div className="min-w-0 flex-1"><p className="annale-title">Mathématiques • BEPC Madagascar</p><p className="annale-meta">{a.corrected?(mg?'Misy corrigé':'Corrigé disponible'):(mg?'Sujet':'Sujet uniquement')}</p></div>
+        <span className="row-arrow" aria-hidden="true">↗</span>
+      </a>)}
+    </div>
+    <p className="source-note">{mg?'Misokatra amin’ny tranonkala LeChaya ireo sujet ireo.':'Les sujets s’ouvrent sur la ressource externe LeChaya.'}</p>
+  </div>;
 }
