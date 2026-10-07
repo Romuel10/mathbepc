@@ -1,4 +1,4 @@
-import { evaluateExpression, formatNumber, solveRelation, type SolveResult } from './engine'
+import { evaluateExpression, formatNumber, solveRelation, type SolveResult } from './engine.ts'
 
 export type SolverMode = 'auto' | 'calculate' | 'solve' | 'expand' | 'factor'
 
