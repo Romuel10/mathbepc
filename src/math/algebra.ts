@@ -30,11 +30,13 @@ function coefficients(source: string): [number, number, number, number] {
 
 function term(coefficient: number, degree: number, first: boolean): string {
   if (Math.abs(coefficient) < EPS) return ''
-  const sign = coefficient < 0 ? '−' : first ? '' : '+'
+  const prefix = first
+    ? (coefficient < 0 ? '−' : '')
+    : (coefficient < 0 ? ' − ' : ' + ')
   const absolute = Math.abs(coefficient)
   const coeff = degree > 0 && Math.abs(absolute - 1) < EPS ? '' : formatNumber(absolute)
   const variable = degree === 0 ? '' : degree === 1 ? 'x' : degree === 2 ? 'x²' : 'x³'
-  return `${sign}${first ? '' : ' '}${coeff}${variable}`
+  return `${prefix}${coeff}${variable}`
 }
 
 function polynomialText([a3, a2, a1, a0]: [number, number, number, number]): string {
@@ -111,9 +113,11 @@ export function factorPolynomial(source: string): SolveResult {
   const r1 = (-a1 - sqrt) / (2 * a2)
   const r2 = (-a1 + sqrt) / (2 * a2)
   const prefix = Math.abs(a2 - 1) < EPS ? '' : Math.abs(a2 + 1) < EPS ? '−' : formatNumber(a2)
+  const highRoot = Math.max(r1, r2)
+  const lowRoot = Math.min(r1, r2)
   const answer = Math.abs(r1 - r2) < EPS
     ? `${prefix}${rootText(r1)}²`
-    : `${prefix}${rootText(r1)}${rootText(r2)}`
+    : `${prefix}${rootText(highRoot)}${rootText(lowRoot)}`
 
   return {
     kind: 'number',

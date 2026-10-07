@@ -11,7 +11,7 @@ test('factorise une différence de deux carrés', () => {
 })
 
 test('factorise un trinôme simple', () => {
-  assert.equal(factorPolynomial('x^2 + 5x + 6').answer, '(x + 3)(x + 2)')
+  assert.equal(factorPolynomial('x^2 + 5x + 6').answer, '(x + 2)(x + 3)')
 })
 
 test('le mode résoudre utilise les équations et inéquations', () => {
