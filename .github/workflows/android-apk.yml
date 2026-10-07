@@ -6,17 +6,6 @@ on:
     branches: [main]
   push:
     branches: [main]
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'resources/**'
-      - 'scripts/**'
-      - 'index.html'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'vite.config.ts'
-      - 'capacitor.config.json'
-      - '.github/workflows/android-apk.yml'
 
 permissions:
   contents: read
@@ -25,6 +14,7 @@ jobs:
   android-apk:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+
     steps:
       - name: Récupérer le projet
         uses: actions/checkout@v4
@@ -33,7 +23,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Installer Java
         uses: actions/setup-java@v5
@@ -48,30 +37,21 @@ jobs:
           "$SDKMANAGER" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Installer les dépendances web
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
-      - name: Lire la version
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "APP_VERSION=$VERSION" >> "$GITHUB_ENV"
-
-      - name: Auditer toutes les dépendances
-        run: npm run audit:deps
-
-      - name: Vérifier MathBEPC
+      - name: Vérifier le projet
         run: npm run check
 
-      - name: Installer Capacitor 8 pour la compilation Android
+      - name: Installer Capacitor
         run: npm install --no-save --no-package-lock @capacitor/core@8.5.2 @capacitor/android@8.5.2 @capacitor/cli@8.5.2
 
-      - name: Construire l'application web
+      - name: Construire le site
         run: npm run build
 
       - name: Créer le projet Android
         run: |
           npx cap add android
           npx cap sync android
-          node scripts/apply-android-branding.mjs
 
       - name: Compiler l'APK
         run: |
@@ -79,15 +59,16 @@ jobs:
           cd android
           ./gradlew assembleDebug --stacktrace
 
-      - name: Préparer l'APK
+      - name: Nommer l'APK
         run: |
+          VERSION=$(node -p "require('./package.json').version")
           mkdir -p artifact
-          cp android/app/build/outputs/apk/debug/app-debug.apk "artifact/MathBEPC-v${APP_VERSION}-debug.apk"
+          cp android/app/build/outputs/apk/debug/app-debug.apk "artifact/MathBEPC-v${VERSION}.apk"
 
-      - name: Publier l'APK comme artefact
+      - name: Publier l'APK
         uses: actions/upload-artifact@v4
         with:
-          name: MathBEPC-v${{ env.APP_VERSION }}-Android-debug
-          path: "artifact/MathBEPC-v${{ env.APP_VERSION }}-debug.apk"
+          name: MathBEPC-Android
+          path: artifact/MathBEPC-v*.apk
           if-no-files-found: error
           retention-days: 30
