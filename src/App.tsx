@@ -1,265 +1,867 @@
-import { useCallback, useEffect, useMemo, useState, type ComponentType } from 'react';
-import FractionTopic from './topics/FractionTopic';
-import RadicalTopic from './topics/RadicalTopic';
-import AbsoluteValueTopic from './topics/AbsoluteValueTopic';
-import DevelopmentTopic from './topics/DevelopmentTopic';
-import FactorizationTopic from './topics/FactorizationTopic';
-import EquationTopic from './topics/EquationTopic';
-import GeometryTopic from './topics/GeometryTopic';
-import StatsTopic from './topics/StatsTopic';
-import PowersTopic from './topics/PowersTopic';
-import VectorTopic from './topics/VectorTopic';
-import SpaceTopic from './topics/SpaceTopic';
-import FunctionsTopic from './topics/FunctionsTopic';
-import CircleTopic from './topics/CircleTopic';
-import SmartSolve from './components/SmartSolve';
-import PracticeMode from './components/PracticeMode';
-import ExamMode from './components/ExamMode';
-import Lessons from './components/Lessons';
-import ProgressDashboard from './components/ProgressDashboard';
-import Annales from './components/Annales';
-import SubjectSolver from './components/SubjectSolver';
-import ProgrammeMap from './components/ProgrammeMap';
-import { getStoredLanguage, setStoredLanguage, ui, type Lang } from './utils/i18n';
-import { loadProgress, recordVisit } from './utils/progress';
+import { useMemo, useState } from 'react'
 import {
-  FractionIcon, RadicalIcon, AbsoluteIcon, ExpandIcon, CompressIcon,
-  EqualsIcon, TriangleIcon, ChartIcon, PowerIcon, ArrowLeftIcon,
-  ArrowRightIcon, MenuIcon, CloseIcon, VectorIcon, BoxIcon, SunIcon, MoonIcon,
-} from './components/Icons';
+  computeStatistics,
+  coordinateDistance,
+  evaluateExpression,
+  formatNumber,
+  simplifyFraction,
+  simplifyRadical,
+  solveLinearSystem,
+  solvePythagoras,
+  solveRelation,
+  solveSmart,
+  solveThales,
+  type SolveResult
+} from './math/engine'
+import { lessons, type Lesson } from './data/lessons'
+import { practiceQuestions } from './data/practice'
 
-type Group='Calculs & nombres'|'Algèbre'|'Géométrie'|'Données';
-type View='home'|'smart'|'subject'|'practice'|'lessons'|'exam'|'progress'|'annales'|'programme'|'chapters'|'chapter';
-interface Chapter{id:string;title:string;mgTitle:string;icon:ComponentType<{className?:string}>;description:string;mgDescription:string;keywords:string;group:Group;component:ComponentType;}
-interface NavState{mathbepc:true;view:View;selected:string|null;}
+type View = 'home' | 'solver' | 'calculator' | 'lessons' | 'practice'
+type IconName = 'home' | 'solve' | 'calculator' | 'book' | 'practice' | 'arrow' | 'check' | 'history' | 'spark' | 'chart' | 'geometry'
 
-const chapters:Chapter[]=[
-{id:'fractions',title:'Fractions & rationnels',mgTitle:'Fraction & rationnel',icon:FractionIcon,description:'Fractions, PGCD/PPCM et calculs rationnels',mgDescription:'Fraction, PGCD/PPCM ary kajy rationnel',keywords:'fraction rationnel pgcd ppcm simplifier',group:'Calculs & nombres',component:FractionTopic},
-{id:'radicals',title:'Racines carrées',mgTitle:'Racine carrée',icon:RadicalIcon,description:'Simplifier et calculer des radicaux',mgDescription:'Mampihena sy mikajy racine',keywords:'racine radical sqrt',group:'Calculs & nombres',component:RadicalTopic},
-{id:'powers',title:'Puissances',mgTitle:'Puissance',icon:PowerIcon,description:'Règles et calculs sur les puissances',mgDescription:'Fitsipika sy kajy puissance',keywords:'puissance exposant',group:'Calculs & nombres',component:PowersTopic},
-{id:'absolute',title:'Valeur absolue',mgTitle:'Valeur absolue',icon:AbsoluteIcon,description:'Distance, équations et inéquations',mgDescription:'Distance, équation ary inéquation',keywords:'valeur absolue distance',group:'Algèbre',component:AbsoluteValueTopic},
-{id:'development',title:'Développement',mgTitle:'Développement',icon:ExpandIcon,description:'Distributivité et identités remarquables',mgDescription:'Distributivité sy identité remarquable',keywords:'développer identité remarquable distribution',group:'Algèbre',component:DevelopmentTopic},
-{id:'factorization',title:'Factorisation',mgTitle:'Factorisation',icon:CompressIcon,description:'Facteur commun, groupement et identités',mgDescription:'Facteur commun, groupement ary identité',keywords:'factoriser facteur commun groupement',group:'Algèbre',component:FactorizationTopic},
-{id:'equations',title:'Équations & inéquations',mgTitle:'Équation & inéquation',icon:EqualsIcon,description:'1er degré, systèmes et tableaux de signes',mgDescription:'Degré 1, système ary tableau de signes',keywords:'équation inequation système cramer premier degré problème',group:'Algèbre',component:EquationTopic},
-{id:'functions',title:'Applications affines',mgTitle:'Application affine',icon:ChartIcon,description:'Images, antécédents, variation et graphique',mgDescription:'Image, antécédent, variation ary graphique',keywords:'fonction application affine lineaire image antécédent coefficient directeur graphique',group:'Algèbre',component:FunctionsTopic},
-{id:'vectors',title:'Vecteurs & coordonnées',mgTitle:'Vecteur & coordonnée',icon:VectorIcon,description:'Vecteurs, droites et transformations',mgDescription:'Vecteur, droite ary transformation',keywords:'vecteur coordonnées milieu norme colinéaire orthogonal droite translation symétrie homothétie',group:'Géométrie',component:VectorTopic},
-{id:'geometry',title:'Géométrie plane',mgTitle:'Géométrie plane',icon:TriangleIcon,description:'Pythagore, Thalès et trigonométrie',mgDescription:'Pythagore, Thalès ary trigonométrie',keywords:'pythagore thales trigonométrie aire périmètre',group:'Géométrie',component:GeometryTopic},
-{id:'circle',title:'Angles & cercle',mgTitle:'Angle & cercle',icon:TriangleIcon,description:'Angles inscrits, arcs et demi-cercle',mgDescription:'Angle inscrit, arc ary demi-cercle',keywords:'cercle angle inscrit centre arc demi cercle tangente sécante',group:'Géométrie',component:CircleTopic},
-{id:'space',title:'Géométrie dans l’espace',mgTitle:'Géométrie espace',icon:BoxIcon,description:'Cônes, pyramides, sections et volumes',mgDescription:'Cône, pyramide, section ary volume',keywords:'volume cube cylindre cone sphere pyramide section réduction tronc',group:'Géométrie',component:SpaceTopic},
-{id:'stats',title:'Statistiques & proportionnalité',mgTitle:'Statistique & proportionnalité',icon:ChartIcon,description:'Histogrammes, moyenne et pourcentages',mgDescription:'Histogramme, moyenne ary pourcentage',keywords:'statistique classes histogramme fréquence cumul moyenne classe modale proportion pourcentage',group:'Données',component:StatsTopic},
-];
-const groups:Group[]=['Calculs & nombres','Algèbre','Géométrie','Données'];
-const groupMg:Record<Group,string>={'Calculs & nombres':'Kajy & isa','Algèbre':'Algèbre','Géométrie':'Géométrie','Données':'Données'};
-
-function useTheme(){
-  const [theme,setTheme]=useState<'dark'|'light'>(()=>localStorage.getItem('mathbepc-theme')==='dark'?'dark':'light');
-  useEffect(()=>{document.documentElement.setAttribute('data-theme',theme);localStorage.setItem('mathbepc-theme',theme);document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme==='dark'?'#111512':'#f7f8fa');},[theme]);
-  return{theme,toggle:()=>setTheme(t=>t==='dark'?'light':'dark')};
+type HistoryItem = {
+  id: string
+  input: string
+  answer: string
+  createdAt: number
 }
 
-function usePWA(){
-  const [installPrompt,setInstallPrompt]=useState<any>(null);
-  const [installed,setInstalled]=useState(false);
-  const [offline,setOffline]=useState(()=>!navigator.onLine);
-  useEffect(()=>{
-    const before=(e:Event)=>{e.preventDefault();setInstallPrompt(e);};
-    const done=()=>setInstalled(true);
-    const off=()=>setOffline(true);
-    const on=()=>setOffline(false);
-    window.addEventListener('beforeinstallprompt',before);
-    window.addEventListener('appinstalled',done);
-    window.addEventListener('offline',off);
-    window.addEventListener('online',on);
-    if(window.matchMedia('(display-mode: standalone)').matches)setInstalled(true);
-    return()=>{window.removeEventListener('beforeinstallprompt',before);window.removeEventListener('appinstalled',done);window.removeEventListener('offline',off);window.removeEventListener('online',on);};
-  },[]);
-  const install=useCallback(async()=>{if(!installPrompt)return;await installPrompt.prompt();const choice=await installPrompt.userChoice;if(choice.outcome==='accepted')setInstalled(true);setInstallPrompt(null);},[installPrompt]);
-  return{canInstall:!!installPrompt&&!installed,offline,install};
+const iconPaths: Record<IconName, string> = {
+  home: 'M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10.5Z',
+  solve: 'M4 5h16M4 12h6m4 0h6M4 19h16M8 2v6m8 8v6',
+  calculator: 'M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm2 4h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h4',
+  book: 'M4 4.5A2.5 2.5 0 0 1 6.5 2H11a3 3 0 0 1 3 3v15a3 3 0 0 0-3-3H6.5A2.5 2.5 0 0 0 4 19.5v-15Zm16 0A2.5 2.5 0 0 0 17.5 2H14v18a3 3 0 0 1 3-3h.5a2.5 2.5 0 0 1 2.5 2.5v-15Z',
+  practice: 'M8 3h8l2 3v15H6V6l2-3Zm1 7h6m-6 4h6m-6 4h4',
+  arrow: 'm9 18 6-6-6-6',
+  check: 'm5 12 4 4L19 6',
+  history: 'M3 12a9 9 0 1 0 3-6.7L3 8m0-5v5h5m4-2v6l4 2',
+  spark: 'm12 2 1.7 5.3L19 9l-5.3 1.7L12 16l-1.7-5.3L5 9l5.3-1.7L12 2Zm7 13 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z',
+  chart: 'M4 20V10m6 10V4m6 16v-7m4 7H2',
+  geometry: 'M12 3 3 20h18L12 3Zm0 6v5m0 3h.01'
 }
 
-function AppLogo(){
-  return <span className="brand-mark"><svg viewBox="0 0 36 36" aria-hidden="true"><path d="M6 18c4 .2 7.2 1.1 10.1 3v8.6C13.3 28 10 27.1 6 26.8V18Z" fill="white"/><path d="M30 18c-4 .2-7.2 1.1-10.1 3v8.6C22.7 28 26 27.1 30 26.8V18Z" fill="white"/><path d="M18 21v8.6" stroke="#dce9e4" strokeWidth="1.2"/><text x="18" y="15" textAnchor="middle" fontSize="12" fontWeight="800" fill="#ffd454">π</text><path d="M28.6 5.2 30.8 8l-1 2.2 1.3 2.4-1.5 3-1.2-2.5.8-2.7-1.3-2.2.7-3Z" fill="#df3f44"/></svg></span>;
+function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
+  return (
+    <svg
+      className="icon"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d={iconPaths[name]} />
+    </svg>
+  )
 }
 
-type GlyphName='solve'|'practice'|'lesson'|'exam'|'paper'|'history'|'program'|'progress'|'chapters';
-function Glyph({name}:{name:GlyphName}){
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    {name==='solve'&&<><path d="M4 7h8"/><path d="M8 3v8"/><path d="M15 6h5"/><path d="M15 16h5"/><path d="M17.5 13.5v5"/></>}
-    {name==='practice'&&<><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="m8 12 2.2 2.2L16 8.5"/></>}
-    {name==='lesson'&&<><path d="M4 4.5c3.2 0 5.7.7 8 2.2v13c-2.3-1.5-4.8-2.2-8-2.2z"/><path d="M20 4.5c-3.2 0-5.7.7-8 2.2v13c2.3-1.5 4.8-2.2 8-2.2z"/></>}
-    {name==='exam'&&<><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></>}
-    {name==='paper'&&<><path d="M6 3.5h9l3 3V20.5H6z"/><path d="M14 3.5v4h4M9 12h6M9 15.5h5"/></>}
-    {name==='history'&&<><path d="M4 12a8 8 0 1 0 2.3-5.7L4 8.5"/><path d="M4 4.5v4h4"/><path d="M12 8v4l3 2"/></>}
-    {name==='program'&&<><path d="M5 5h14M5 10h14M5 15h9M5 20h9"/><circle cx="18" cy="17.5" r="2.5"/></>}
-    {name==='progress'&&<><path d="M5 19V9M12 19V5M19 19v-7"/></>}
-    {name==='chapters'&&<><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></>}
-  </svg>;
+function useStoredState<T>(key: string, initialValue: T): [T, (value: T) => void] {
+  const [value, setValue] = useState<T>(() => {
+    try {
+      const raw = localStorage.getItem(key)
+      return raw ? (JSON.parse(raw) as T) : initialValue
+    } catch {
+      return initialValue
+    }
+  })
+
+  const update = (next: T) => {
+    setValue(next)
+    try {
+      localStorage.setItem(key, JSON.stringify(next))
+    } catch {
+      // Le stockage local est optionnel.
+    }
+  }
+
+  return [value, update]
 }
 
-export default function App(){
-  const [view,setView]=useState<View>('home');
-  const [selected,setSelected]=useState<string|null>(null);
-  const [menuOpen,setMenuOpen]=useState(false);
-  const [search,setSearch]=useState('');
-  const [lang,setLang]=useState<Lang>(()=>getStoredLanguage());
-  const [progressTick,setProgressTick]=useState(0);
-  const {theme,toggle}=useTheme();
-  const {canInstall,offline,install}=usePWA();
-  const tr=ui(lang);
-  const current=chapters.find(c=>c.id===selected);
-  const currentIndex=chapters.findIndex(c=>c.id===selected);
-  const progress=useMemo(()=>loadProgress(),[progressTick]);
-  const accuracy=progress.attempts?Math.round(progress.correct/progress.attempts*100):0;
-
-  useEffect(()=>{const h=()=>setProgressTick(v=>v+1);window.addEventListener('mathbepc-progress',h);return()=>window.removeEventListener('mathbepc-progress',h);},[]);
-  useEffect(()=>{
-    window.history.replaceState({mathbepc:true,view:'home',selected:null} satisfies NavState,'');
-    const onPop=(event:PopStateEvent)=>{
-      const state=event.state as NavState|null;
-      if(state?.mathbepc){setView(state.view);setSelected(state.selected);setMenuOpen(false);window.scrollTo({top:0,behavior:'smooth'});}
-      else{setView('home');setSelected(null);setMenuOpen(false);}
-    };
-    window.addEventListener('popstate',onPop);
-    return()=>window.removeEventListener('popstate',onPop);
-  },[]);
-
-  const navigate=(next:View,nextSelected:string|null=null)=>{
-    const state:NavState={mathbepc:true,view:next,selected:next==='chapter'?nextSelected:null};
-    window.history.pushState(state,'');
-    setView(next);setSelected(state.selected);setMenuOpen(false);window.scrollTo({top:0,behavior:'smooth'});
-  };
-  const go=(next:View)=>navigate(next);
-  const goBack=()=>{if(view!=='home')window.history.back();};
-  const goHome=()=>{setSearch('');navigate('home');};
-  const openChapter=(id:string)=>{recordVisit(id);navigate('chapter',id);};
-  const toggleLang=()=>{const next=lang==='fr'?'mg':'fr';setLang(next);setStoredLanguage(next);};
-  const filtered=useMemo(()=>{
-    const q=search.trim().toLowerCase();
-    return q?chapters.filter(ch=>[ch.title,ch.mgTitle,ch.description,ch.mgDescription,ch.keywords].join(' ').toLowerCase().includes(q)):chapters;
-  },[search]);
-  const pageTitle=view==='chapter'&&current
-    ?(lang==='mg'?current.mgTitle:current.title)
-    :({smart:tr.solve,subject:'Sujet BEPC',practice:tr.practice,lessons:tr.revise,exam:tr.exam,progress:tr.progress,annales:tr.annales,programme:lang==='mg'?'Programme ofisialy':'Programme de 3e',chapters:tr.explore} as Partial<Record<View,string>>)[view]||'MathBEPC';
-  const featured=['fractions','equations','geometry','stats'].map(id=>chapters.find(c=>c.id===id)!);
-
-  const menuItems:{id:View;label:string;icon:GlyphName}[]=[
-    {id:'home',label:tr.backHome,icon:'chapters'},
-    {id:'subject',label:lang==='mg'?'Sujet BEPC':'Résoudre un sujet BEPC',icon:'paper'},
-    {id:'exam',label:tr.exam,icon:'exam'},
-    {id:'annales',label:tr.annales,icon:'history'},
-    {id:'programme',label:lang==='mg'?'Programme ofisialy':'Programme de 3e',icon:'program'},
-    {id:'progress',label:tr.progress,icon:'progress'},
-    {id:'chapters',label:tr.explore,icon:'chapters'},
-  ];
-
-  return <div className="app-shell">
-    <header className="topbar safe-top">
-      <div className="topbar-inner">
-        <div className="topbar-left">
-          {view!=='home'
-            ?<button type="button" onClick={goBack} className="back-button"><ArrowLeftIcon/><span>{lang==='mg'?'Hiverina':'Retour'}</span></button>
-            :<button type="button" onClick={goHome} className="brand-button"><AppLogo/><span><strong>MathBEPC</strong><small>{tr.appSubtitle}</small></span></button>}
-          {view!=='home'&&<div className="page-location"><strong>{pageTitle}</strong><small>MathBEPC</small></div>}
-        </div>
-        <div className="topbar-actions">
-          {offline&&<span className="offline-dot" title={tr.offline}/>}
-          {canInstall&&<button type="button" onClick={install} className="install-button">{tr.install}</button>}
-          <button type="button" onClick={toggleLang} className="topbar-text-button" title={tr.languageTitle}>{tr.language}</button>
-          <button type="button" onClick={toggle} className="icon-button desktop-only" aria-label="Thème">{theme==='dark'?<SunIcon/>:<MoonIcon/>}</button>
-          <button type="button" onClick={()=>setMenuOpen(true)} className="icon-button desktop-only" aria-label="Menu"><MenuIcon/></button>
-        </div>
+function AppLogo() {
+  return (
+    <div className="brand">
+      <div className="brand-mark" aria-hidden="true">
+        <span>∑</span>
       </div>
+      <div>
+        <strong>MathBEPC</strong>
+        <small>Madagascar</small>
+      </div>
+    </div>
+  )
+}
+
+const navigation: Array<{ id: View; label: string; icon: IconName }> = [
+  { id: 'home', label: 'Accueil', icon: 'home' },
+  { id: 'solver', label: 'Résoudre', icon: 'solve' },
+  { id: 'calculator', label: 'Calculs', icon: 'calculator' },
+  { id: 'lessons', label: 'Cours', icon: 'book' },
+  { id: 'practice', label: 'Exercices', icon: 'practice' }
+]
+
+function ResultCard({ result }: { result: SolveResult }) {
+  return (
+    <section className="result-card animate-in" aria-live="polite">
+      <div className="result-topline">
+        <span className="result-label">{result.title}</span>
+        <span className="result-status">Résolu</span>
+      </div>
+      <div className="result-answer">{result.answer}</div>
+      <div className="step-list">
+        {result.steps.map((step, index) => (
+          <div className="step" key={index}>
+            <span className="step-number">{index + 1}</span>
+            <div>
+              <strong>{step.title}</strong>
+              {step.expression ? <div className="math-line">{step.expression}</div> : null}
+              {step.detail ? <p>{step.detail}</p> : null}
+            </div>
+          </div>
+        ))}
+      </div>
+      {result.note ? <div className="note">{result.note}</div> : null}
+    </section>
+  )
+}
+
+function PageTitle({
+  eyebrow,
+  title,
+  description
+}: {
+  eyebrow: string
+  title: string
+  description: string
+}) {
+  return (
+    <header className="page-title">
+      <span>{eyebrow}</span>
+      <h1>{title}</h1>
+      <p>{description}</p>
     </header>
+  )
+}
 
-    <main className="app-main">
-      {view==='home'&&<div className="home-page animate-fade-up">
-        <section className="home-hero">
-          <p className="home-kicker">BEPC • Madagascar • 3e</p>
-          <h1>{tr.homeTitle}</h1>
-          <p>{tr.homeLead}</p>
-        </section>
+function Home({
+  onNavigate,
+  history,
+  completed
+}: {
+  onNavigate: (view: View) => void
+  history: HistoryItem[]
+  completed: string[]
+}) {
+  const progress = Math.round((completed.length / practiceQuestions.length) * 100)
 
-        <section className="home-main-actions">
-          <button type="button" onClick={()=>go('smart')} className="home-primary-card">
-            <span className="home-action-icon"><Glyph name="solve"/></span>
-            <span className="home-action-copy"><strong>{tr.solve}</strong><small>{tr.solveDesc}</small></span>
-            <span className="home-action-arrow">→</span>
+  return (
+    <div className="page animate-page">
+      <section className="hero">
+        <div className="hero-copy">
+          <span className="eyebrow">Préparation 3e et BEPC</span>
+          <h1>Comprendre la méthode, puis réussir le calcul.</h1>
+          <p>
+            Un espace de travail conçu pour les notions réellement étudiées au collège à Madagascar :
+            calcul littéral, équations, statistiques, Thalès, trigonométrie, vecteurs et géométrie.
+          </p>
+          <div className="hero-actions">
+            <button className="button primary" onClick={() => onNavigate('solver')}>
+              Commencer une résolution
+              <Icon name="arrow" />
+            </button>
+            <button className="button secondary" onClick={() => onNavigate('practice')}>
+              S’entraîner au BEPC
+            </button>
+          </div>
+        </div>
+        <div className="hero-visual" aria-hidden="true">
+          <div className="formula-card formula-card-a">3x + 7 = 19</div>
+          <div className="formula-card formula-card-b">AB² = AC² + BC²</div>
+          <div className="formula-card formula-card-c">AM / AB = AN / AC</div>
+          <div className="orb orb-one" />
+          <div className="orb orb-two" />
+        </div>
+      </section>
+
+      <section className="metrics-grid">
+        <article className="metric-card">
+          <div className="metric-icon"><Icon name="book" /></div>
+          <div><strong>{lessons.length}</strong><span>chapitres essentiels</span></div>
+        </article>
+        <article className="metric-card">
+          <div className="metric-icon"><Icon name="practice" /></div>
+          <div><strong>{practiceQuestions.length}</strong><span>exercices guidés</span></div>
+        </article>
+        <article className="metric-card">
+          <div className="metric-icon"><Icon name="chart" /></div>
+          <div><strong>{progress}%</strong><span>progression exercices</span></div>
+        </article>
+      </section>
+
+      <section className="section-block">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">Accès rapide</span>
+            <h2>Choisir le bon outil</h2>
+          </div>
+        </div>
+        <div className="feature-grid">
+          <button className="feature-card" onClick={() => onNavigate('solver')}>
+            <span className="feature-icon"><Icon name="solve" /></span>
+            <strong>Résolution pas à pas</strong>
+            <p>Saisir une expression, une équation ou une inéquation et suivre les étapes.</p>
+            <span className="card-link">Ouvrir <Icon name="arrow" size={16} /></span>
           </button>
-          <div className="home-secondary-actions">
-            <button type="button" onClick={()=>go('practice')} className="home-secondary-card"><span className="home-action-icon soft"><Glyph name="practice"/></span><span><strong>{tr.practice}</strong><small>{tr.practiceDesc}</small></span></button>
-            <button type="button" onClick={()=>go('lessons')} className="home-secondary-card"><span className="home-action-icon soft"><Glyph name="lesson"/></span><span><strong>{tr.revise}</strong><small>{tr.reviseDesc}</small></span></button>
+          <button className="feature-card" onClick={() => onNavigate('calculator')}>
+            <span className="feature-icon"><Icon name="calculator" /></span>
+            <strong>Outils de calcul</strong>
+            <p>Fractions, statistiques, Pythagore, Thalès, coordonnées et systèmes.</p>
+            <span className="card-link">Ouvrir <Icon name="arrow" size={16} /></span>
+          </button>
+          <button className="feature-card" onClick={() => onNavigate('lessons')}>
+            <span className="feature-icon"><Icon name="book" /></span>
+            <strong>Fiches de cours</strong>
+            <p>Formules, méthode et exemple corrigé pour chaque chapitre important.</p>
+            <span className="card-link">Consulter <Icon name="arrow" size={16} /></span>
+          </button>
+        </div>
+      </section>
+
+      {history.length > 0 ? (
+        <section className="section-block">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">Historique</span>
+              <h2>Derniers calculs</h2>
+            </div>
+            <button className="text-button" onClick={() => onNavigate('solver')}>Voir le résolveur</button>
+          </div>
+          <div className="history-list">
+            {history.slice(0, 3).map(item => (
+              <article className="history-row" key={item.id}>
+                <span className="history-icon"><Icon name="history" size={18} /></span>
+                <div>
+                  <strong>{item.input}</strong>
+                  <span>{item.answer}</span>
+                </div>
+                <time>{new Date(item.createdAt).toLocaleDateString('fr-FR')}</time>
+              </article>
+            ))}
           </div>
         </section>
+      ) : null}
+    </div>
+  )
+}
 
-        <section className="home-section">
-          <div className="section-title-row"><div><h2>{lang==='mg'?'Hiomana amin’ny BEPC':'Préparer le BEPC'}</h2><p>{lang==='mg'?'Fitaovana ho an’ny fanadinana.':'Les outils utiles avant l’examen.'}</p></div></div>
-          <div className="tool-grid">
-            {[
-              {id:'exam' as View,name:tr.exam,sub:lang==='mg'?'Chronomètre • /20':'Chronomètre • note /20',icon:'exam' as GlyphName},
-              {id:'subject' as View,name:lang==='mg'?'Sujet iray manontolo':'Résoudre un sujet',sub:'PDF • image • texte',icon:'paper' as GlyphName},
-              {id:'annales' as View,name:tr.annales,sub:'2009 — 2018',icon:'history' as GlyphName},
-              {id:'programme' as View,name:lang==='mg'?'Programme ofisialy':'Programme de 3e',sub:'Madagascar',icon:'program' as GlyphName},
-            ].map(item=><button key={item.id} type="button" onClick={()=>go(item.id)} className="tool-card"><span><Glyph name={item.icon}/></span><strong>{item.name}</strong><small>{item.sub}</small></button>)}
+function Solver({
+  history,
+  onHistory
+}: {
+  history: HistoryItem[]
+  onHistory: (item: HistoryItem) => void
+}) {
+  const [input, setInput] = useState('3x + 7 = 19')
+  const [result, setResult] = useState<SolveResult | null>(null)
+  const [error, setError] = useState('')
+  const examples = ['5x - 7 = 18', '3(x - 2) <= 12', 'sqrt(108)', 'moyenne : 8 ; 10 ; 10 ; 12']
+
+  const run = () => {
+    try {
+      const solved = solveSmart(input)
+      setResult(solved)
+      setError('')
+      onHistory({
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        input: input.trim(),
+        answer: solved.answer,
+        createdAt: Date.now()
+      })
+    } catch (reason) {
+      setResult(null)
+      setError(reason instanceof Error ? reason.message : 'Le calcul n’a pas pu être interprété.')
+    }
+  }
+
+  const insert = (value: string) => setInput(current => current + value)
+
+  return (
+    <div className="page animate-page">
+      <PageTitle
+        eyebrow="Moteur de résolution"
+        title="Résoudre pas à pas"
+        description="Entrez votre calcul comme sur votre cahier. Le moteur applique les priorités et détaille les étapes utiles."
+      />
+
+      <div className="workspace-grid">
+        <section className="panel solver-panel">
+          <label className="field-label" htmlFor="problem">Calcul ou équation</label>
+          <textarea
+            id="problem"
+            className="problem-input"
+            value={input}
+            onChange={event => setInput(event.target.value)}
+            placeholder="Exemple : 3x + 7 = 19"
+            rows={4}
+            spellCheck={false}
+          />
+          <div className="math-keyboard">
+            {['(', ')', '²', '√', '×', '÷', 'π', '%'].map(key => (
+              <button type="button" key={key} onClick={() => insert(key)}>{key}</button>
+            ))}
+          </div>
+          <div className="example-row">
+            {examples.map(example => (
+              <button key={example} type="button" onClick={() => setInput(example)}>{example}</button>
+            ))}
+          </div>
+          {error ? <div className="error-box">{error}</div> : null}
+          <button className="button primary full" onClick={run}>
+            Calculer et expliquer
+            <Icon name="arrow" />
+          </button>
+        </section>
+
+        <aside className="panel guidance-panel">
+          <div className="guidance-title">
+            <span className="feature-icon compact"><Icon name="spark" /></span>
+            <div>
+              <strong>Formats reconnus</strong>
+              <span>Écriture naturelle de collège</span>
+            </div>
+          </div>
+          <ul className="clean-list">
+            <li><span>Calcul</span><code>3 + 5 × 2²</code></li>
+            <li><span>Équation</span><code>4x - 3 = 13</code></li>
+            <li><span>Inéquation</span><code>2x + 1 &lt; 9</code></li>
+            <li><span>Racine</span><code>√108</code></li>
+            <li><span>Statistiques</span><code>moyenne : 8 ; 10 ; 12</code></li>
+          </ul>
+          <p className="muted">
+            Les fonctions trigonométriques sin, cos et tan utilisent les degrés, comme en classe.
+          </p>
+        </aside>
+      </div>
+
+      {result ? <ResultCard result={result} /> : null}
+
+      {history.length > 0 ? (
+        <section className="section-block compact-section">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">Historique local</span>
+              <h2>Résolutions récentes</h2>
+            </div>
+          </div>
+          <div className="history-list">
+            {history.slice(0, 5).map(item => (
+              <button className="history-row interactive" key={item.id} onClick={() => setInput(item.input)}>
+                <span className="history-icon"><Icon name="history" size={18} /></span>
+                <div><strong>{item.input}</strong><span>{item.answer}</span></div>
+                <time>{new Date(item.createdAt).toLocaleDateString('fr-FR')}</time>
+              </button>
+            ))}
           </div>
         </section>
+      ) : null}
+    </div>
+  )
+}
 
-        <section className="home-section">
-          <div className="section-title-row"><div><h2>{lang==='mg'?'Toko fampiasa matetika':'Chapitres essentiels'}</h2><p>{lang==='mg'?'Fidirana haingana amin’ny toko lehibe.':'Accès rapide aux notions les plus travaillées.'}</p></div><button type="button" onClick={()=>go('chapters')} className="text-button">{tr.explore} →</button></div>
-          <div className="featured-chapters">{featured.map(ch=><button key={ch.id} type="button" onClick={()=>openChapter(ch.id)} className="featured-chapter"><span className="featured-chapter-icon"><ch.icon/></span><div><strong>{lang==='mg'?ch.mgTitle:ch.title}</strong><small>{lang==='mg'?ch.mgDescription:ch.description}</small></div><i>→</i></button>)}</div>
-        </section>
+type CalculatorTab = 'scientific' | 'fraction' | 'statistics' | 'geometry' | 'system'
 
-        <section className="progress-strip" onClick={()=>go('progress')} onKeyDown={e=>{if(e.key==='Enter'||e.key===' ')go('progress');}} role="button" tabIndex={0}>
-          <div><span className="progress-strip-icon"><Glyph name="progress"/></span><p><strong>{tr.progress}</strong><small>{progress.attempts} {lang==='mg'?'fanazarana':'exercices'} • {accuracy}% {lang==='mg'?'fahombiazana':'de réussite'}</small></p></div><span>→</span>
-        </section>
-      </div>}
+function Calculator() {
+  const [tab, setTab] = useState<CalculatorTab>('scientific')
+  const [result, setResult] = useState<SolveResult | null>(null)
+  const [error, setError] = useState('')
+  const [expression, setExpression] = useState('sin(30) + sqrt(49)')
+  const [numerator, setNumerator] = useState('84')
+  const [denominator, setDenominator] = useState('126')
+  const [series, setSeries] = useState('8; 10; 10; 12; 15')
+  const [geometryTool, setGeometryTool] = useState<'pythagore' | 'thales' | 'distance' | 'radical'>('pythagore')
+  const [geometryValues, setGeometryValues] = useState(['3', '4', '', ''])
+  const [systemValues, setSystemValues] = useState(['2', '1', '7', '1', '-1', '2'])
 
-      {view==='smart'&&<SmartSolve lang={lang} onOpenChapter={openChapter}/>}
-      {view==='subject'&&<SubjectSolver lang={lang} onOpenChapter={openChapter}/>}
-      {view==='practice'&&<PracticeMode lang={lang}/>}
-      {view==='lessons'&&<Lessons lang={lang} onOpenChapter={openChapter}/>}
-      {view==='exam'&&<ExamMode lang={lang}/>}
-      {view==='progress'&&<ProgressDashboard lang={lang}/>}
-      {view==='annales'&&<Annales lang={lang} onStartExam={()=>go('exam')}/>}
-      {view==='programme'&&<ProgrammeMap lang={lang} onOpenChapter={openChapter}/>}
+  const execute = (operation: () => SolveResult) => {
+    try {
+      setResult(operation())
+      setError('')
+    } catch (reason) {
+      setResult(null)
+      setError(reason instanceof Error ? reason.message : 'Valeurs invalides.')
+    }
+  }
 
-      {view==='chapters'&&<div className="page-medium animate-fade-up">
-        <header className="page-heading"><div><h1 className="page-title">{tr.explore}</h1><p className="page-description">{lang==='mg'?'Safidio ny toko tianao hianarana na hanaovana kajy.':'Choisis la notion que tu veux réviser ou calculer.'}</p></div></header>
-        <label className="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input value={search} onChange={e=>setSearch(e.target.value)} placeholder={tr.searchChapter}/></label>
-        <div className="chapter-groups">{groups.map(group=>{const list=filtered.filter(c=>c.group===group);if(!list.length)return null;return <section key={group}><h2>{lang==='mg'?groupMg[group]:group}</h2><div className="chapter-grid">{list.map(ch=><button key={ch.id} type="button" onClick={()=>openChapter(ch.id)} className="chapter-card"><span className="chapter-icon"><ch.icon/></span><div><strong>{lang==='mg'?ch.mgTitle:ch.title}</strong><small>{lang==='mg'?ch.mgDescription:ch.description}</small></div><i>→</i></button>)}</div></section>;})}{!filtered.length&&<p className="empty-state">{tr.noResult}</p>}</div>
-      </div>}
+  const numberValue = (value: string) => {
+    if (value.trim() === '') return undefined
+    const parsed = Number(value.replace(',', '.'))
+    if (!Number.isFinite(parsed)) throw new Error('Une valeur numérique est invalide.')
+    return parsed
+  }
 
-      {view==='chapter'&&current&&<div className="page-medium animate-fade-up">
-        <header className="chapter-header">
-          <span className="chapter-hero-icon"><current.icon/></span>
-          <div><h1>{lang==='mg'?current.mgTitle:current.title}</h1><p>{lang==='mg'?current.mgDescription:current.description}</p><div className="chapter-header-actions"><button type="button" onClick={()=>go('lessons')} className="secondary-button">{lang==='mg'?'Lesona':'Voir le cours'}</button><button type="button" onClick={()=>go('chapters')} className="text-button">{tr.changeChapter}</button></div></div>
-        </header>
-        <section className="topic-workspace"><current.component/></section>
-        <nav className="chapter-pagination">
-          {currentIndex>0?<button type="button" onClick={()=>openChapter(chapters[currentIndex-1].id)}><ArrowLeftIcon/><span><small>{tr.prev}</small><strong>{lang==='mg'?chapters[currentIndex-1].mgTitle:chapters[currentIndex-1].title}</strong></span></button>:<span/>}
-          {currentIndex<chapters.length-1?<button type="button" onClick={()=>openChapter(chapters[currentIndex+1].id)}><span><small>{tr.next}</small><strong>{lang==='mg'?chapters[currentIndex+1].mgTitle:chapters[currentIndex+1].title}</strong></span><ArrowRightIcon/></button>:<span/>}
+  const runScientific = () => execute(() => {
+    const value = evaluateExpression(expression)
+    return {
+      kind: 'number',
+      title: 'Calcul scientifique',
+      answer: formatNumber(value),
+      steps: [
+        { title: 'Expression', expression },
+        { title: 'Résultat', expression: formatNumber(value), detail: 'Les angles trigonométriques sont interprétés en degrés.' }
+      ]
+    }
+  })
+
+  const runGeometry = () => execute(() => {
+    const v = geometryValues.map(numberValue)
+    if (geometryTool === 'pythagore') {
+      return solvePythagoras(v[0], v[1], v[2])
+    }
+    if (geometryTool === 'thales') {
+      if (v[0] === undefined || v[1] === undefined || v[2] === undefined) throw new Error('Renseignez les trois valeurs connues.')
+      return solveThales(v[0], v[1], v[2])
+    }
+    if (geometryTool === 'distance') {
+      if (v[0] === undefined || v[1] === undefined || v[2] === undefined || v[3] === undefined) throw new Error('Renseignez les quatre coordonnées.')
+      return coordinateDistance(v[0], v[1], v[2], v[3])
+    }
+    if (v[0] === undefined) throw new Error('Entrez le nombre sous la racine.')
+    return simplifyRadical(v[0])
+  })
+
+  const tabs: Array<{ id: CalculatorTab; label: string }> = [
+    { id: 'scientific', label: 'Scientifique' },
+    { id: 'fraction', label: 'Fractions' },
+    { id: 'statistics', label: 'Statistiques' },
+    { id: 'geometry', label: 'Géométrie' },
+    { id: 'system', label: 'Systèmes' }
+  ]
+
+  return (
+    <div className="page animate-page">
+      <PageTitle
+        eyebrow="Boîte à outils"
+        title="Calculs avancés"
+        description="Des outils spécialisés pour les calculs les plus fréquents des sujets de 3e et du BEPC."
+      />
+
+      <div className="tab-strip" role="tablist">
+        {tabs.map(item => (
+          <button
+            key={item.id}
+            className={tab === item.id ? 'active' : ''}
+            onClick={() => { setTab(item.id); setResult(null); setError('') }}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      <section className="panel calculator-panel">
+        {tab === 'scientific' ? (
+          <div className="tool-form">
+            <div>
+              <label className="field-label" htmlFor="scientific-expression">Expression</label>
+              <input
+                id="scientific-expression"
+                className="text-input large"
+                value={expression}
+                onChange={event => setExpression(event.target.value)}
+              />
+            </div>
+            <div className="helper-grid">
+              <button onClick={() => setExpression('sqrt(72)')}>Racine carrée</button>
+              <button onClick={() => setExpression('sin(30)')}>Trigonométrie</button>
+              <button onClick={() => setExpression('(3 + 5) * 2^3')}>Priorités</button>
+              <button onClick={() => setExpression('15% * 240')}>Pourcentage</button>
+            </div>
+            <button className="button primary" onClick={runScientific}>Calculer</button>
+          </div>
+        ) : null}
+
+        {tab === 'fraction' ? (
+          <div className="tool-form">
+            <div className="two-columns">
+              <div>
+                <label className="field-label" htmlFor="numerator">Numérateur</label>
+                <input id="numerator" className="text-input" inputMode="numeric" value={numerator} onChange={event => setNumerator(event.target.value)} />
+              </div>
+              <div>
+                <label className="field-label" htmlFor="denominator">Dénominateur</label>
+                <input id="denominator" className="text-input" inputMode="numeric" value={denominator} onChange={event => setDenominator(event.target.value)} />
+              </div>
+            </div>
+            <button className="button primary" onClick={() => execute(() => simplifyFraction(Number(numerator), Number(denominator)))}>
+              Simplifier la fraction
+            </button>
+          </div>
+        ) : null}
+
+        {tab === 'statistics' ? (
+          <div className="tool-form">
+            <div>
+              <label className="field-label" htmlFor="series">Série de valeurs</label>
+              <textarea id="series" className="problem-input compact" rows={3} value={series} onChange={event => setSeries(event.target.value)} />
+              <span className="field-help">Séparez les valeurs par des espaces, virgules ou points-virgules.</span>
+            </div>
+            <button className="button primary" onClick={() => execute(() => {
+              const values = (series.match(/-?\d+(?:[.,]\d+)?/g) ?? []).map(value => Number(value.replace(',', '.')))
+              return computeStatistics(values)
+            })}>
+              Analyser la série
+            </button>
+          </div>
+        ) : null}
+
+        {tab === 'geometry' ? (
+          <div className="tool-form">
+            <div className="segmented">
+              {([
+                ['pythagore', 'Pythagore'],
+                ['thales', 'Thalès'],
+                ['distance', 'Coordonnées'],
+                ['radical', 'Racines']
+              ] as const).map(([id, label]) => (
+                <button key={id} className={geometryTool === id ? 'active' : ''} onClick={() => { setGeometryTool(id); setResult(null) }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {geometryTool === 'pythagore' ? (
+              <>
+                <p className="tool-explainer">Renseignez exactement deux longueurs parmi a, b et l’hypoténuse c.</p>
+                <div className="three-columns">
+                  {['a', 'b', 'c (hypoténuse)'].map((label, index) => (
+                    <div key={label}>
+                      <label className="field-label">{label}</label>
+                      <input className="text-input" inputMode="decimal" value={geometryValues[index] ?? ''} onChange={event => {
+                        const next = [...geometryValues]
+                        next[index] = event.target.value
+                        setGeometryValues(next)
+                      }} />
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : null}
+
+            {geometryTool === 'thales' ? (
+              <>
+                <p className="tool-explainer">Pour la proportion a / b = c / x, indiquez a, b et c.</p>
+                <div className="three-columns">
+                  {['a', 'b', 'c'].map((label, index) => (
+                    <div key={label}>
+                      <label className="field-label">{label}</label>
+                      <input className="text-input" inputMode="decimal" value={geometryValues[index] ?? ''} onChange={event => {
+                        const next = [...geometryValues]
+                        next[index] = event.target.value
+                        setGeometryValues(next)
+                      }} />
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : null}
+
+            {geometryTool === 'distance' ? (
+              <>
+                <p className="tool-explainer">Coordonnées de A(xA ; yA) et B(xB ; yB).</p>
+                <div className="four-columns">
+                  {['xA', 'yA', 'xB', 'yB'].map((label, index) => (
+                    <div key={label}>
+                      <label className="field-label">{label}</label>
+                      <input className="text-input" inputMode="decimal" value={geometryValues[index] ?? ''} onChange={event => {
+                        const next = [...geometryValues]
+                        next[index] = event.target.value
+                        setGeometryValues(next)
+                      }} />
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : null}
+
+            {geometryTool === 'radical' ? (
+              <div>
+                <label className="field-label">Entier sous la racine</label>
+                <input className="text-input" inputMode="numeric" value={geometryValues[0] ?? ''} onChange={event => {
+                  const next = [...geometryValues]
+                  next[0] = event.target.value
+                  setGeometryValues(next)
+                }} />
+              </div>
+            ) : null}
+            <button className="button primary" onClick={runGeometry}>Résoudre</button>
+          </div>
+        ) : null}
+
+        {tab === 'system' ? (
+          <div className="tool-form">
+            <p className="tool-explainer">Forme : a₁x + b₁y = c₁ et a₂x + b₂y = c₂.</p>
+            <div className="system-grid">
+              {['a₁', 'b₁', 'c₁', 'a₂', 'b₂', 'c₂'].map((label, index) => (
+                <div key={label}>
+                  <label className="field-label">{label}</label>
+                  <input className="text-input" inputMode="decimal" value={systemValues[index] ?? ''} onChange={event => {
+                    const next = [...systemValues]
+                    next[index] = event.target.value
+                    setSystemValues(next)
+                  }} />
+                </div>
+              ))}
+            </div>
+            <button className="button primary" onClick={() => execute(() => {
+              const values = systemValues.map(value => Number(value.replace(',', '.')))
+              if (values.some(value => !Number.isFinite(value))) throw new Error('Tous les coefficients doivent être numériques.')
+              return solveLinearSystem(
+                values[0] ?? 0,
+                values[1] ?? 0,
+                values[2] ?? 0,
+                values[3] ?? 0,
+                values[4] ?? 0,
+                values[5] ?? 0
+              )
+            })}>
+              Résoudre le système
+            </button>
+          </div>
+        ) : null}
+
+        {error ? <div className="error-box">{error}</div> : null}
+      </section>
+
+      {result ? <ResultCard result={result} /> : null}
+    </div>
+  )
+}
+
+function Lessons() {
+  const [selected, setSelected] = useState<Lesson | null>(null)
+  const [query, setQuery] = useState('')
+
+  const filtered = useMemo(() => {
+    const term = query.trim().toLowerCase()
+    if (!term) return lessons
+    return lessons.filter(lesson =>
+      `${lesson.title} ${lesson.description} ${lesson.area}`.toLowerCase().includes(term)
+    )
+  }, [query])
+
+  if (selected) {
+    return (
+      <div className="page animate-page">
+        <button className="back-button" onClick={() => setSelected(null)}>
+          <span className="back-arrow">←</span> Tous les cours
+        </button>
+        <article className="lesson-detail">
+          <span className="lesson-area">{selected.area}</span>
+          <h1>{selected.title}</h1>
+          <p className="lesson-lead">{selected.description}</p>
+
+          <div className="lesson-columns">
+            <section className="lesson-box">
+              <span className="box-index">01</span>
+              <h2>À retenir</h2>
+              <ul>{selected.essentials.map(item => <li key={item}>{item}</li>)}</ul>
+            </section>
+            <section className="lesson-box">
+              <span className="box-index">02</span>
+              <h2>Méthode</h2>
+              <ol>{selected.method.map(item => <li key={item}>{item}</li>)}</ol>
+            </section>
+          </div>
+
+          <section className="worked-example">
+            <div>
+              <span className="eyebrow">Exemple corrigé</span>
+              <h2>{selected.example.question}</h2>
+            </div>
+            <div className="step-list">
+              {selected.example.solution.map((line, index) => (
+                <div className="step" key={line}>
+                  <span className="step-number">{index + 1}</span>
+                  <div className="math-line">{line}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </article>
+      </div>
+    )
+  }
+
+  return (
+    <div className="page animate-page">
+      <PageTitle
+        eyebrow="Programme de 3e"
+        title="Cours et méthodes"
+        description="Des fiches courtes qui privilégient les formules, la méthode de rédaction et les exercices types."
+      />
+      <div className="search-wrap">
+        <input className="text-input search-input" value={query} onChange={event => setQuery(event.target.value)} placeholder="Rechercher un chapitre..." />
+      </div>
+      <div className="lesson-grid">
+        {filtered.map((lesson, index) => (
+          <button className="lesson-card" key={lesson.id} onClick={() => setSelected(lesson)}>
+            <span className="lesson-number">{String(index + 1).padStart(2, '0')}</span>
+            <span className="lesson-area">{lesson.area}</span>
+            <strong>{lesson.title}</strong>
+            <p>{lesson.description}</p>
+            <span className="card-link">Ouvrir la fiche <Icon name="arrow" size={16} /></span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function Practice({
+  completed,
+  onCompleted
+}: {
+  completed: string[]
+  onCompleted: (ids: string[]) => void
+}) {
+  const [index, setIndex] = useState(0)
+  const [showHint, setShowHint] = useState(false)
+  const [showSolution, setShowSolution] = useState(false)
+  const question = practiceQuestions[index] ?? practiceQuestions[0]
+  const percent = Math.round((completed.length / practiceQuestions.length) * 100)
+
+  if (!question) return null
+
+  const goTo = (next: number) => {
+    setIndex((next + practiceQuestions.length) % practiceQuestions.length)
+    setShowHint(false)
+    setShowSolution(false)
+  }
+
+  const markDone = () => {
+    if (!completed.includes(question.id)) onCompleted([...completed, question.id])
+    setShowSolution(true)
+  }
+
+  return (
+    <div className="page animate-page">
+      <PageTitle
+        eyebrow="Entraînement BEPC"
+        title="Exercices guidés"
+        description="Travaillez une question à la fois, demandez un indice si nécessaire, puis comparez votre démarche au corrigé."
+      />
+
+      <section className="practice-progress">
+        <div>
+          <strong>{completed.length}/{practiceQuestions.length}</strong>
+          <span>exercices terminés</span>
+        </div>
+        <div className="progress-track"><span style={{ width: `${percent}%` }} /></div>
+        <span>{percent}%</span>
+      </section>
+
+      <section className="practice-card">
+        <div className="practice-meta">
+          <span>{question.area}</span>
+          <span>Niveau {question.level}/3</span>
+          <span>Question {index + 1}/{practiceQuestions.length}</span>
+        </div>
+        <h2>{question.prompt}</h2>
+
+        <div className="practice-actions">
+          <button className="button secondary" onClick={() => setShowHint(value => !value)}>
+            {showHint ? 'Masquer l’indice' : 'Afficher un indice'}
+          </button>
+          <button className="button primary" onClick={markDone}>Voir la correction</button>
+        </div>
+
+        {showHint ? <div className="hint-box"><strong>Indice</strong><span>{question.hint}</span></div> : null}
+
+        {showSolution ? (
+          <div className="solution-box animate-in">
+            <div className="solution-answer">
+              <span className="status-check"><Icon name="check" size={18} /></span>
+              <div><span>Réponse</span><strong>{question.answer}</strong></div>
+            </div>
+            <div className="step-list">
+              {question.solution.map((line, stepIndex) => (
+                <div className="step" key={line}>
+                  <span className="step-number">{stepIndex + 1}</span>
+                  <div className="math-line">{line}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </section>
+
+      <div className="practice-nav">
+        <button className="button secondary" onClick={() => goTo(index - 1)}>Question précédente</button>
+        <button className="button secondary" onClick={() => goTo(index + 1)}>Question suivante</button>
+      </div>
+    </div>
+  )
+}
+
+export default function App() {
+  const [view, setView] = useState<View>('home')
+  const [history, setHistory] = useStoredState<HistoryItem[]>('mathbepc-history-v2', [])
+  const [completed, setCompleted] = useStoredState<string[]>('mathbepc-completed-v2', [])
+
+  const addHistory = (item: HistoryItem) => {
+    const withoutDuplicate = history.filter(previous => previous.input !== item.input)
+    setHistory([item, ...withoutDuplicate].slice(0, 20))
+  }
+
+  return (
+    <div className="app-shell">
+      <aside className="sidebar">
+        <AppLogo />
+        <nav className="side-nav" aria-label="Navigation principale">
+          {navigation.map(item => (
+            <button
+              key={item.id}
+              className={view === item.id ? 'active' : ''}
+              onClick={() => setView(item.id)}
+            >
+              <Icon name={item.icon} />
+              <span>{item.label}</span>
+            </button>
+          ))}
         </nav>
-      </div>}
-    </main>
-
-    <nav className="bottom-nav safe-bottom" aria-label={lang==='mg'?'Navigation':'Navigation principale'}>
-      {[
-        {id:'home' as View,label:lang==='mg'?'Fandraisana':'Accueil',icon:'chapters' as GlyphName},
-        {id:'smart' as View,label:lang==='mg'?'Hamaha':'Résoudre',icon:'solve' as GlyphName},
-        {id:'practice' as View,label:lang==='mg'?'Fanazarana':'Exercices',icon:'practice' as GlyphName},
-        {id:'lessons' as View,label:lang==='mg'?'Lesona':'Réviser',icon:'lesson' as GlyphName},
-      ].map(item=><button key={item.id} type="button" onClick={()=>go(item.id)} className={view===item.id?'is-active':''} aria-current={view===item.id?'page':undefined}><Glyph name={item.icon}/><span>{item.label}</span></button>)}
-      <button type="button" onClick={()=>setMenuOpen(true)} className={['exam','subject','annales','programme','progress','chapters','chapter'].includes(view)?'is-active':''}><MenuIcon/><span>{lang==='mg'?'Hafa':'Plus'}</span></button>
-    </nav>
-
-    {menuOpen&&<div className="nav-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)setMenuOpen(false);}}>
-      <aside className="nav-panel" role="dialog" aria-modal="true" aria-label="Navigation">
-        <div className="nav-panel-head"><div><strong>MathBEPC</strong><small>{tr.appSubtitle}</small></div><button type="button" onClick={()=>setMenuOpen(false)} className="icon-button"><CloseIcon/></button></div>
-        <div className="nav-panel-list">{menuItems.map(item=><button key={item.id} type="button" onClick={()=>go(item.id)}><span><Glyph name={item.icon}/></span><strong>{item.label}</strong><i>→</i></button>)}</div>
-        <div className="nav-panel-settings"><button type="button" onClick={toggle}><span>{theme==='dark'?<SunIcon/>:<MoonIcon/>}</span>{theme==='dark'?(lang==='mg'?'Mode mazava':'Mode clair'):(lang==='mg'?'Mode maizina':'Mode sombre')}</button>{canInstall&&<button type="button" onClick={install}><span>↓</span>{tr.install}</button>}</div>
-        <p className="nav-version">MathBEPC v{__APP_VERSION__}{offline&&<span> • {tr.offline}</span>}</p>
+        <div className="sidebar-foot">
+          <span>Version 2.0</span>
+          <strong>Conçu pour travailler hors ligne</strong>
+        </div>
       </aside>
-    </div>}
 
-    <footer className="desktop-footer"><span>MathBEPC Madagascar • v{__APP_VERSION__}</span><span>{lang==='mg'?'Matematika kilasy faha-3 • BEPC':'Mathématiques de 3e • BEPC'}</span></footer>
-  </div>;
+      <main className="main-content">
+        <div className="mobile-topbar">
+          <AppLogo />
+          <span className="offline-pill">Hors ligne</span>
+        </div>
+
+        {view === 'home' ? <Home onNavigate={setView} history={history} completed={completed} /> : null}
+        {view === 'solver' ? <Solver history={history} onHistory={addHistory} /> : null}
+        {view === 'calculator' ? <Calculator /> : null}
+        {view === 'lessons' ? <Lessons /> : null}
+        {view === 'practice' ? <Practice completed={completed} onCompleted={setCompleted} /> : null}
+      </main>
+
+      <nav className="bottom-nav" aria-label="Navigation mobile">
+        {navigation.map(item => (
+          <button
+            key={item.id}
+            className={view === item.id ? 'active' : ''}
+            onClick={() => setView(item.id)}
+          >
+            <Icon name={item.icon} size={19} />
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </nav>
+    </div>
+  )
 }

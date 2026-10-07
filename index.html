@@ -3,27 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>MathBEPC Madagascar - Révision BEPC 3e</title>
-    <meta name="description" content="Assistant de révision BEPC Madagascar : résolution expliquée, cours, entraînement, examen, progrès et annales de mathématiques 3e." />
-
-    <!-- PWA -->
-    <link rel="manifest" href="./manifest.json" />
-    <meta name="theme-color" content="#145C48" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="MathBEPC" />
-    <link rel="apple-touch-icon" href="./icon-192.png" />
+    <meta name="theme-color" content="#07101f" />
+    <meta name="description" content="MathBEPC Madagascar — réviser, calculer et résoudre les mathématiques de 3e et du BEPC." />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>MathBEPC Madagascar</title>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js').catch(() => {});
-        });
-      }
-    </script>
   </body>
 </html>

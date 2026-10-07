@@ -1,0 +1,19 @@
+{
+  "name": "MathBEPC Madagascar",
+  "short_name": "MathBEPC",
+  "description": "Révision et résolution de mathématiques pour la classe de 3e et le BEPC à Madagascar.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07101f",
+  "theme_color": "#07101f",
+  "lang": "fr",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
