@@ -1,4 +1,4 @@
-const CACHE = 'mathbepc-v2'
+const CACHE = 'mathbepc-v2-1'
 const CORE = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg']
 
 self.addEventListener('install', event => {
